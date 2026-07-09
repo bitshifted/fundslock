@@ -18,7 +18,7 @@ init-project: check-python
 
 copyright-check:
 	@echo "Checking copyright headers..."
-	@grep -L "^// Copyright (c) 2026 Bitshift ED$$" src/*.sol
+	@grep -Lr "^// Copyright (c) 2026 Bitshift ED$$" src/*.sol test/*.sol script/*.sol
 
 
 format-check:

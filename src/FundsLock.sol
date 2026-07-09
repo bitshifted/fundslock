@@ -5,7 +5,7 @@ pragma solidity ^0.8.35;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Escrow is AccessControl {
+contract FundsLock is AccessControl {
     bytes32 public constant ESCROW_ROLE = keccak256("ESCROW_ROLE");
 
     constructor() {
