@@ -4,9 +4,7 @@ out = "out"
 libs = ["lib"]
 fs_permissions = [{ access = "read-write", path = "./" }]
 ffi = true
-remappings = [
-    '@openzeppelin/contracts=lib/openzeppelin-contracts/contracts/'
-]
+
 
 [profile.zksync]
 out = "zkout"
