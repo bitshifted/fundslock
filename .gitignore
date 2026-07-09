@@ -1,15 +1,30 @@
-# Remix compiler artifacts
-**/artifacts/
-**/artifacts/**
+# Compiler files
+cache/
+out/
+zkout/
 
-# Remix plugin state folders
-deps/
-states/
+# Commonly ignored directories
+.logs/
+.ignore/
+foundry.lock
 
-# Debug info
-*.dbg.json
-*.tsbuildinfo
+# Ignores development broadcast logs
+broadcast/
 
-# Optional
+# Docs
+docs/
+
+# Dotenv file
 .env
-.env.local
+.env.*
+!.env.example
+
+# Python .venv files
+.venv/
+
+# Integration test output
+testout/
+
+# VSCode files
+.vscode/
+
