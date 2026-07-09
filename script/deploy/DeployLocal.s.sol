@@ -5,7 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {FundsLock} from "../../src/FundsLock.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {console} from "forge-std/console.sol";
-import {Walets} from "../common/Walets.s.sol";
+import {Wallets} from "../common/Wallets.s.sol";
 
 /**
  * Deploys contract to local network, like Anvil or Kurtosis. It takes a predefined set of wallets from a JSON file
@@ -18,10 +18,10 @@ import {Walets} from "../common/Walets.s.sol";
  */
 contract DeployLocal is Script {
     FundsLock internal fundsLock;
-    Walets private wallets;
+    Wallets private wallets;
 
     function setUp() public {
-        wallets = new Walets();
+        wallets = new Wallets();
         wallets.run("./config/test-accounts.json");
     }
 
@@ -36,7 +36,7 @@ contract DeployLocal is Script {
         return fundsLock;
     }
 
-    function getWallets() public view returns (Walets) {
+    function getWallets() public view returns (Wallets) {
         return wallets;
     }
 }

@@ -5,16 +5,16 @@ pragma solidity ^0.8.35;
 import {Script} from "forge-std/Script.sol";
 // import {BasicEscrow, EscrowAgreement} from "../../../src/BasicEscrow.sol";
 import {console} from "forge-std/console.sol";
-import {Walets} from "./common/Walets.s.sol";
+import {Wallets} from "./common/Wallets.s.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract IntegrationTest is Script, Test {
     // BasicEscrow private basicEscrow;
-    Walets private wallets;
+    Wallets private wallets;
 
     function setUp() public {
-        wallets = new Walets("./config/test-accounts.json");
-        wallets.run();
+        wallets = new Wallets();
+        wallets.run("./config/test-accounts.json");
         string memory addrString = vm.readFile("./testout/address.txt");
         console.log("BasicEscrow contract address loaded from testout/address.txt: ", addrString);
         // basicEscrow = BasicEscrow(payable(vm.parseAddress(addrString)));

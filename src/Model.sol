@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2026 Bitshift ED
+
+pragma solidity ^0.8.35;
+
+enum AgreementStatus {
+    CREATED,
+    FUNDED,
+    SELLER_ACCEPTED,
+    RELEASED,
+    CANCELLED
+}
+
+struct EscrowAgreement {
+    address seller;
+    address payable buyer;
+    uint256 amount;
+    bool funded;
+    bool sellerAccepted;
+    bool sellerRequestedRelease;
+    bool buyerApprovedRelease;
+    bool released;
+}
+
+event AgreementEvent(
+    address indexed seller, address indexed buyer, uint256 amount, AgreementStatus status, uint256 timestamp
+);
