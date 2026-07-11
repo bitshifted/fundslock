@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2026 Bitshift ED
+
 pragma solidity ^0.8.35;
 
 import {Script} from "forge-std/Script.sol";

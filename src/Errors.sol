@@ -6,3 +6,5 @@ pragma solidity ^0.8.35;
 error AddressNotSet();
 
 error InsufficientAmount(uint256 minimum, uint256 provided);
+
+error InvalidStakeholderAddress(address provided, address seller, address buyer);

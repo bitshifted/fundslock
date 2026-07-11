@@ -17,8 +17,20 @@ init-project: check-python
 	@forge install
 
 copyright-check:
+	@echo "Checking license headers..."
+	@files=$$(grep -R -L "^// SPDX-License-Identifier: MPL-2.0$$" src test script --include='*.sol' || true); \
+	if [ -n "$$files" ]; then \
+		echo "Missing license headers:"; \
+		echo "$$files"; \
+		exit 1; \
+	fi
 	@echo "Checking copyright headers..."
-	@grep -Lr "^// Copyright (c) 2026 Bitshift ED$$" src/*.sol test/*.sol script/*.sol
+	@files=$$(grep -R -L "^// Copyright (c) 2026 Bitshift ED$$" src test script --include='*.sol' || true); \
+	if [ -n "$$files" ]; then \
+		echo "Missing copyright headers:"; \
+		echo "$$files"; \
+		exit 1; \
+	fi
 
 
 format-check:
@@ -37,6 +49,10 @@ build: format-check copyright-check lint test
 	@echo "Building project..."
 	@forge build
 
+coverage:
+	@echo "Running coverage..."
+	@forge coverage --no-match-coverage "(script|test)"
+
 start-testnet:
 	@running=$$(kurtosis enclave inspect local-eth-testnet | grep "Status:" | awk '{print $$NF}'); \
 	if [ "$$running" = "RUNNING" ]; then \
@@ -49,7 +65,8 @@ start-testnet:
 deploy-contract-kurtosis: start-testnet
 	@echo "Deploying BasicEscrow contract..."; \
 	KURTOSIS_RPC_URL=$$(kurtosis port print local-eth-testnet el-1-geth-lighthouse rpc); \
-	forge script script/BasicEscrowDeploy.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast
+	mkdir testout; \
+	forge script script/deploy/DeployLocal.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast
 
 integration-test: deploy-contract-kurtosis
 	@echo "Running integration tests..."; \
@@ -58,4 +75,4 @@ integration-test: deploy-contract-kurtosis
 
 make static-analysis:
 	@echo "Running static analysis..."; 
-	@.venv/bin/slither . --solc-remaps "@openzeppelin/=lib/openzeppelin-contracts/"
+	@.venv/bin/slither . --filter-paths "./lib" --solc-remaps "@openzeppelin/=lib/openzeppelin-contracts/"
