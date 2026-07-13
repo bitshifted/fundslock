@@ -47,4 +47,4 @@ jobs:
           sudo apt install -y kurtosis-cli
       - name: Run integration tests
         run: |
-          make integration-tests
+          make integration-test
