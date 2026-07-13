@@ -40,8 +40,12 @@ jobs:
       - name: Initialize project
         run: |
           make init-project
-      - name: Kurtosis
-        uses: kurtosis-tech/kurtosis-github-action@v1
+      - name: Install Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://fury.io /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt-get update
+          sudo apt-get install -y kurtosis-cli
+        with:
       - name: Run integration tests
         run: |
           make integration-tests
