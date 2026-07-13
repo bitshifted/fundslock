@@ -49,6 +49,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Initialize project
+        run: |
+          make init-project
       - name: Run static code analysis
         run: |
           make static-analysis
