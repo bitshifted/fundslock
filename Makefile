@@ -63,15 +63,15 @@ start-testnet:
 	fi
 
 deploy-contract-kurtosis: start-testnet
-	@echo "Deploying BasicEscrow contract..."; \
+	@echo "Deploying contract..."; \
 	KURTOSIS_RPC_URL=$$(kurtosis port print local-eth-testnet el-1-geth-lighthouse rpc); \
 	mkdir testout; \
-	forge script script/deploy/DeployLocal.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast
+	forge script script/deploy/DeployLocal.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast --slow --delay 10 --skip-simulation
 
 integration-test: deploy-contract-kurtosis
 	@echo "Running integration tests..."; \
 	KURTOSIS_RPC_URL=$$(kurtosis port print local-eth-testnet el-1-geth-lighthouse rpc); \
-	forge script script/IntegrationTest.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast
+	forge script script/IntegrationTest.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast --slow --delay 10 --skip-simulation
 
 make static-analysis:
 	@echo "Running static analysis..."; 
