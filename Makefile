@@ -53,6 +53,10 @@ coverage:
 	@echo "Running coverage..."
 	@forge coverage --no-match-coverage "(script|test)"
 
+coverage-lcov:
+	@echo "Generating lcov report..."
+	@forge coverage --no-match-coverage "(script|test)" --report lcov
+
 start-testnet:
 	@running=$$(kurtosis enclave inspect local-eth-testnet | grep "Status:" | awk '{print $$NF}'); \
 	if [ "$$running" = "RUNNING" ]; then \

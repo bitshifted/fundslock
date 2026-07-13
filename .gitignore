@@ -24,6 +24,7 @@ docs/
 
 # Integration test output
 testout/
+lcov.info
 
 # VSCode files
 .vscode/
