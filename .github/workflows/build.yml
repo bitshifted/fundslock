@@ -1,0 +1,80 @@
+name: Build and test
+
+permissions: {}
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - name: Initialize project
+        run: |
+          make init-project
+      - name: Build and test
+        run: |
+          make build
+      - name: Test coverage
+        run: |
+          make coverage-lcov
+      - name: Setup LCOV (Required for parsing tool)
+        uses: hrishikesh-kadam/setup-lcov@v1
+      - name: Post Coverage Comment to PR
+        uses: kefasjw/lcov-pull-request-report@v1
+        with:
+          lcov-file: ./lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-title: "📊 Foundry Test Coverage Report"
+  static-analysis:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - name: Initialize project
+        run: |
+          make init-project
+      - name: Run static code analysis
+        run: |
+          make static-analysis
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - name: Initialize project
+        run: |
+          make init-project
+      - name: Install Kurtosis
+        run: |
+          echo "deb [trusted=yes] https://sdk.kurtosis.com/kurtosis-cli-release-artifacts/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          sudo apt install -y kurtosis-cli
+      - name: Run integration tests
+        run: |
+          make integration-test

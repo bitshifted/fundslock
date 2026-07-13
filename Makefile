@@ -53,6 +53,10 @@ coverage:
 	@echo "Running coverage..."
 	@forge coverage --no-match-coverage "(script|test)"
 
+coverage-lcov:
+	@echo "Generating lcov report..."
+	@forge coverage --no-match-coverage "(script|test)" --report lcov
+
 start-testnet:
 	@running=$$(kurtosis enclave inspect local-eth-testnet | grep "Status:" | awk '{print $$NF}'); \
 	if [ "$$running" = "RUNNING" ]; then \
@@ -63,15 +67,20 @@ start-testnet:
 	fi
 
 deploy-contract-kurtosis: start-testnet
-	@echo "Deploying BasicEscrow contract..."; \
+	@echo "Deploying contract..."; \
 	KURTOSIS_RPC_URL=$$(kurtosis port print local-eth-testnet el-1-geth-lighthouse rpc); \
+	echo "Waiting for Kurtosis node to mine the first block..."; \
+	until [ "$$(cast block-number --rpc-url $$KURTOSIS_RPC_URL 2>/dev/null)" -gt 0 ]; do \
+		sleep 1; \
+	done; \
+ 	echo "Node is healthy and mining. Running tests!"; \
 	mkdir testout; \
-	forge script script/deploy/DeployLocal.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast
+	forge script script/deploy/DeployLocal.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast --slow --delay 10
 
 integration-test: deploy-contract-kurtosis
 	@echo "Running integration tests..."; \
 	KURTOSIS_RPC_URL=$$(kurtosis port print local-eth-testnet el-1-geth-lighthouse rpc); \
-	forge script script/IntegrationTest.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast
+	forge script script/IntegrationTest.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast --slow --delay 10
 
 make static-analysis:
 	@echo "Running static analysis..."; 
