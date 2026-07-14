@@ -1,0 +1,30 @@
+name: Build and tag main branch
+
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          with:
+            submodules: recursive
+        - name: Install Foundry
+          uses: foundry-rs/foundry-toolchain@v1
+        - name: Initialize project
+          run: |
+            make init-project
+        - name: Build and test
+          run: |
+            make build
+        - name: Configure version information
+          id: calculate-version
+          uses: bitshifted/git-auto-semver@v1
+          with:
+            create_tag: true
+            initial_version: 0.1.0
