@@ -77,6 +77,10 @@ deploy-contract-kurtosis: start-testnet
 	mkdir testout; \
 	forge script script/deploy/DeployLocal.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast --slow --delay 10
 
+deploy-contract-public:
+	@echo "Deploying contract to $$NETWORK_RPC_URL"; \
+	forge script script/deploy/DeployPublic.s.sol --rpc-url $$NETWORK_RPC_URL --broadcast --slow --aws
+
 integration-test: deploy-contract-kurtosis
 	@echo "Running integration tests..."; \
 	KURTOSIS_RPC_URL=$$(kurtosis port print local-eth-testnet el-1-geth-lighthouse rpc); \

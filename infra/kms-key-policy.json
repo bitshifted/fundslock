@@ -1,0 +1,54 @@
+{
+    "Version": "2012-10-17",
+    "Id": "kms-key-creation-policy",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::111122223333:root"
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow Access for Key Administrators",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::111122223333:role/AdminRole"
+            },
+            "Action": [
+                "kms:Create*",
+                "kms:Describe*",
+                "kms:Enable*",
+                "kms:List*",
+                "kms:Put*",
+                "kms:Update*",
+                "kms:Revoke*",
+                "kms:Disable*",
+                "kms:Get*",
+                "kms:Delete*",
+                "kms:TagResource",
+                "kms:UntagResource",
+                "kms:ScheduleKeyDeletion",
+                "kms:CancelKeyDeletion"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow Use of the Key",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::111122223333:role/ApplicationRole"
+            },
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
