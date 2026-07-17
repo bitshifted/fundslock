@@ -89,3 +89,6 @@ integration-test: deploy-contract-kurtosis
 make static-analysis:
 	@echo "Running static analysis..."; 
 	@.venv/bin/slither . --filter-paths "./lib" --solc-remaps "@openzeppelin/=lib/openzeppelin-contracts/"
+
+make docs:
+	forge doc --serve
