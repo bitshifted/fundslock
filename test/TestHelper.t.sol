@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0fo
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (c) 2026 Bitshift ED
 
 pragma solidity ^0.8.35;
