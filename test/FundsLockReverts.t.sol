@@ -25,8 +25,8 @@ contract FundsLockReverts is Test {
         fundsLock = new FundsLock();
         helper = new TestHelper();
 
-        buyerWallet = helper.createWallet("buyer", 1 ether);
-        sellerWallet = helper.createWallet("seller", 1 ether);
+        buyerWallet = helper.createWallet("buyer", 10 ether);
+        sellerWallet = helper.createWallet("seller", 10 ether);
 
         vm.deal(buyerWallet.addr, buyerWallet.balance);
         vm.deal(sellerWallet.addr, sellerWallet.balance);
@@ -107,7 +107,11 @@ contract FundsLockReverts is Test {
         vm.prank(buyerWallet.addr);
         fundsLock.fundAgreement{value: 1 ether}(id);
 
-        vm.expectRevert();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                FundsLock_InvalidAgreementStatusTransition.selector, AgreementStatus.FUNDED, AgreementStatus.FUNDED
+            )
+        );
         vm.prank(buyerWallet.addr);
         fundsLock.fundAgreement{value: 1 ether}(id);
     }

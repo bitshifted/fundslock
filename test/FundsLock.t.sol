@@ -81,4 +81,23 @@ contract FundsLockTest is Test {
         vm.prank(sellerWallet.addr);
         fundsLock.sellerAcceptAgreement(agreementId);
     }
+
+    function test_BuyerFundsAgreementSuccess() public {
+        uint256 testAmount = 0.5 ether;
+        uint256 startingBalance = fundsLock.getBalance();
+
+        vm.prank(buyerWallet.addr);
+        uint256 agreementId = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), testAmount);
+
+        vm.expectEmit(true, true, false, true);
+        emit AgreementEvent(sellerWallet.addr, buyerWallet.addr, testAmount, AgreementStatus.FUNDED, block.timestamp);
+
+        vm.startPrank(buyerWallet.addr);
+        fundsLock.fundAgreement{value: testAmount}(agreementId);
+        vm.stopPrank();
+
+        EscrowAgreement memory agreement = fundsLock.getAgreement(agreementId);
+        assertEq(agreement.funded, true, "Agreement should be funded");
+        assertEq(address(fundsLock).balance, startingBalance + testAmount, "Contract should have received the funds");
+    }
 }
