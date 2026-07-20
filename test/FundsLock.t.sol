@@ -100,4 +100,39 @@ contract FundsLockTest is Test {
         assertEq(agreement.funded, true, "Agreement should be funded");
         assertEq(address(fundsLock).balance, startingBalance + testAmount, "Contract should have received the funds");
     }
+
+    function test_ReleaseFundsSuccess() public {
+        uint256 testAmount = 0.5 ether;
+
+        // 1. Create agreement
+        vm.prank(buyerWallet.addr);
+        uint256 id = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), testAmount);
+
+        // 2. Seller accepts
+        vm.prank(sellerWallet.addr);
+        fundsLock.sellerAcceptAgreement(id);
+
+        // 3. Buyer funds
+        vm.prank(buyerWallet.addr);
+        fundsLock.fundAgreement{value: testAmount}(id);
+
+        // Check pre-release balances
+        uint256 sellerStartingBalance = sellerWallet.addr.balance;
+
+        // 4. Seller requests release
+        vm.prank(sellerWallet.addr);
+        fundsLock.releaseFunds(id);
+
+        // 5. Buyer approves release
+        vm.expectEmit(true, true, false, true);
+        emit AgreementEvent(sellerWallet.addr, buyerWallet.addr, testAmount, AgreementStatus.RELEASED, block.timestamp);
+
+        vm.prank(buyerWallet.addr);
+        fundsLock.releaseFunds(id);
+
+        // 6. Verify results
+        EscrowAgreement memory agreement = fundsLock.getAgreement(id);
+        assertEq(agreement.released, true, "Agreement should be marked as released");
+        assertEq(sellerWallet.addr.balance, sellerStartingBalance + testAmount, "Seller should have received the funds");
+    }
 }

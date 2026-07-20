@@ -125,4 +125,63 @@ contract FundsLockReverts is Test {
         vm.prank(buyerWallet.addr);
         fundsLock.fundAgreement{value: amount / 2}(id);
     }
+
+    // releaseFunds() tests
+
+    function test_ReleaseFundsFailsWhenAgreementNotFound() public {
+        vm.expectRevert(abi.encodeWithSelector(FundsLock_AgreementNotFound.selector, 12345));
+        vm.prank(sellerWallet.addr);
+        fundsLock.releaseFunds(12345);
+    }
+
+    function test_ReleaseFundsFailsWhenNotStakeholder() public {
+        vm.prank(buyerWallet.addr);
+        uint256 id = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), 1 ether);
+
+        Wallet memory scamWallet = helper.createWallet("scam", 1 ether);
+        vm.deal(scamWallet.addr, scamWallet.balance);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                FundsLock_InvalidStakeholderAddress.selector, scamWallet.addr, sellerWallet.addr, buyerWallet.addr
+            )
+        );
+        vm.prank(scamWallet.addr);
+        fundsLock.releaseFunds(id);
+    }
+
+    function test_ReleaseFundsFailsWhenNotFunded() public {
+        vm.prank(buyerWallet.addr);
+        uint256 id = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), 1 ether);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                FundsLock_InvalidAgreementStatusTransition.selector, AgreementStatus.FUNDED, AgreementStatus.RELEASED
+            )
+        );
+        vm.prank(sellerWallet.addr);
+        fundsLock.releaseFunds(id);
+    }
+
+    function test_ReleaseFundsFailsWhenNotAcceptedBySeller() public {
+        // Buyer creates agreement directly, so sellerAccepted is false
+        address seller = address(0x1);
+        vm.prank(buyerWallet.addr);
+        uint256 id = fundsLock.createAgreement(seller, payable(buyerWallet.addr), 1 ether);
+
+        // Fund the agreement
+        vm.prank(buyerWallet.addr);
+        fundsLock.fundAgreement{value: 1 ether}(id);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                FundsLock_InvalidAgreementStatusTransition.selector,
+                AgreementStatus.SELLER_ACCEPTED,
+                AgreementStatus.RELEASED
+            )
+        );
+        // Call with seller to pass stakeholder check, but fail accepted check
+        vm.prank(seller);
+        fundsLock.releaseFunds(id);
+    }
 }

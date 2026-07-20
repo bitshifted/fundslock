@@ -103,14 +103,19 @@ contract FundsLock is AccessControl {
 
     function releaseFunds(uint256 id) public payable {
         EscrowAgreement storage agreement = agreements[id];
-        require(agreementFound(agreement), "Agreement not found");
+        if (!agreementFound(agreement)) {
+            revert FundsLock_AgreementNotFound(id);
+        }
         // only seller or buyer can release funds
-        require(
-            msg.sender == agreement.seller || msg.sender == agreement.buyer,
-            "Only the seller or buyer can release funds"
-        );
-        require(agreement.funded, "Agreement has not been funded");
-        require(agreement.sellerAccepted, "Seller has not accepted the agreement");
+        if (msg.sender != agreement.seller && msg.sender != agreement.buyer) {
+            revert FundsLock_InvalidStakeholderAddress(msg.sender, agreement.seller, agreement.buyer);
+        }
+        if (!agreement.funded) {
+            revert FundsLock_InvalidAgreementStatusTransition(AgreementStatus.FUNDED, AgreementStatus.RELEASED);
+        }
+        if (!agreement.sellerAccepted) {
+            revert FundsLock_InvalidAgreementStatusTransition(AgreementStatus.SELLER_ACCEPTED, AgreementStatus.RELEASED);
+        }
 
         if (msg.sender == agreement.seller && !agreement.sellerRequestedRelease) {
             agreement.sellerRequestedRelease = true;
