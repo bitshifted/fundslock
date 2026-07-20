@@ -20,8 +20,13 @@ contract FundsLock is AccessControl {
     }
 
     function createAgreement(address seller, address payable buyer, uint256 amount) public returns (uint256) {
+        // addresses must be provided
         if (seller == address(0) || buyer == address(0)) {
             revert AddressNotSet();
+        }
+        // seller and buyer can not be the same address
+        if (seller == buyer) {
+            revert SameStakeholderAddress(seller);
         }
         // amount must be provided
         if (amount <= 0) {
@@ -29,7 +34,7 @@ contract FundsLock is AccessControl {
         }
         // only seller or buyer can create agreement
         if (msg.sender != seller && msg.sender != buyer) {
-            revert InvalidStakeholderAddress({provided: msg.sender, seller: seller, buyer: buyer});
+            revert FundsLock_InvalidStakeholderAddress({provided: msg.sender, seller: seller, buyer: buyer});
         }
         // if seller is the sender, it implies he already accepted the agreement
         bool sellerAccepted = msg.sender == seller ? true : false;
@@ -48,16 +53,20 @@ contract FundsLock is AccessControl {
         if (sellerAccepted) {
             emit AgreementEvent(seller, buyer, amount, AgreementStatus.SELLER_ACCEPTED, block.timestamp);
         }
-        emit AgreementEvent(seller, buyer, amount, AgreementStatus.CREATED, block.timestamp);
         return idCounter - 1; // return the id of the newly created agreement (current id - 1)
     }
 
     function sellerAcceptAgreement(uint256 id) public {
         EscrowAgreement storage agreement = agreements[id];
-        require(agreementFound(agreement), "Agreement not found");
-        require(agreement.seller != address(0), "Agreement not found");
-        require(msg.sender == agreement.seller, "Only the seller can accept the agreement");
-        require(!agreement.sellerAccepted, "Agreement already accepted");
+        if (!agreementFound(agreement)) {
+            revert FundsLock_AgreementNotFound(id);
+        }
+        if (msg.sender != agreement.seller) {
+            revert FundsLock_InvalidStakeholderAddress(msg.sender, agreement.seller, agreement.buyer);
+        }
+        if (agreement.sellerAccepted) {
+            revert FundsLock_AlreadyAccepted(id);
+        }
         agreement.sellerAccepted = true;
         emit AgreementEvent(
             agreement.seller, agreement.buyer, agreement.amount, AgreementStatus.SELLER_ACCEPTED, block.timestamp
@@ -68,10 +77,18 @@ contract FundsLock is AccessControl {
         EscrowAgreement storage agreement = agreements[id];
 
         // Checks
-        require(agreementFound(agreement), "Agreement not found");
-        require(msg.sender == agreement.buyer, "Only the buyer can fund the agreement");
-        require(!agreement.funded, "Agreement already funded");
-        require(msg.value == agreement.amount, "Incorrect funding amount");
+        if (!agreementFound(agreement)) {
+            revert FundsLock_AgreementNotFound(id);
+        }
+        if (msg.sender != agreement.buyer) {
+            revert FundsLock_InvalidStakeholderAddress(msg.sender, agreement.seller, agreement.buyer);
+        }
+        if (agreement.funded) {
+            revert FundsLock_InvalidAgreementStatusTransition(AgreementStatus.FUNDED, AgreementStatus.FUNDED);
+        }
+        if (msg.value != agreement.amount) {
+            revert FundsLock_InvalidAmount(agreement.amount, msg.value);
+        }
 
         // Effects: Funds are automatically transferred to the contract balance because the function is `payable`.
         agreement.funded = true;
@@ -86,14 +103,19 @@ contract FundsLock is AccessControl {
 
     function releaseFunds(uint256 id) public payable {
         EscrowAgreement storage agreement = agreements[id];
-        require(agreementFound(agreement), "Agreement not found");
+        if (!agreementFound(agreement)) {
+            revert FundsLock_AgreementNotFound(id);
+        }
         // only seller or buyer can release funds
-        require(
-            msg.sender == agreement.seller || msg.sender == agreement.buyer,
-            "Only the seller or buyer can release funds"
-        );
-        require(agreement.funded, "Agreement has not been funded");
-        require(agreement.sellerAccepted, "Seller has not accepted the agreement");
+        if (msg.sender != agreement.seller && msg.sender != agreement.buyer) {
+            revert FundsLock_InvalidStakeholderAddress(msg.sender, agreement.seller, agreement.buyer);
+        }
+        if (!agreement.funded) {
+            revert FundsLock_InvalidAgreementStatusTransition(AgreementStatus.FUNDED, AgreementStatus.RELEASED);
+        }
+        if (!agreement.sellerAccepted) {
+            revert FundsLock_InvalidAgreementStatusTransition(AgreementStatus.SELLER_ACCEPTED, AgreementStatus.RELEASED);
+        }
 
         if (msg.sender == agreement.seller && !agreement.sellerRequestedRelease) {
             agreement.sellerRequestedRelease = true;

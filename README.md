@@ -49,9 +49,23 @@ Test coverage report:
 make coverage
 ```
 
+View documentation:
+
+```
+make docs
+```
+
 # Deploying project
 
 ## Deploying to local Kurtosis node
+
+Project can spin up local Kurtosis node for testing. This is done automatically by integration tests, but can alsso be used for local contract deployment, for testing purposes.
+
+```
+make deploy-contract-kurtosis
+```
+
+This target will spin up local node and deploy contract to it.
 
 ## Deploying to test/mainnet using AWS KMS
 

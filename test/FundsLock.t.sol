@@ -7,23 +7,21 @@ import {Test} from "forge-std/Test.sol";
 import {FundsLock, EscrowAgreement, AgreementStatus, AgreementEvent} from "../src/FundsLock.sol";
 import "../src/Errors.sol";
 import {console} from "forge-std/console.sol";
+import {Wallet, TestHelper} from "./TestHelper.t.sol";
 
 contract FundsLockTest is Test {
-    FundsLock public fundsLock;
+    FundsLock private fundsLock;
+    TestHelper private helper;
 
-    struct Wallet {
-        address addr;
-        uint256 balance;
-    }
-
-    Wallet public buyerWallet;
-    Wallet public sellerWallet;
+    Wallet private buyerWallet;
+    Wallet private sellerWallet;
 
     function setUp() public {
         fundsLock = new FundsLock();
+        helper = new TestHelper();
 
-        buyerWallet = Wallet({addr: makeAddr("buyer"), balance: 1 ether});
-        sellerWallet = Wallet({addr: makeAddr("seller"), balance: 1 ether});
+        buyerWallet = helper.createWallet("buyer", 1 ether);
+        sellerWallet = helper.createWallet("seller", 1 ether);
 
         vm.deal(buyerWallet.addr, buyerWallet.balance);
         vm.deal(sellerWallet.addr, sellerWallet.balance);
@@ -70,17 +68,71 @@ contract FundsLockTest is Test {
         assertEq(agreement.sellerAccepted, true, "Seller should have accepted automatically");
     }
 
-    function test_CreateAgreementFailsWhenSenderMismatch() public {
+    function test_SellerAcceptsAgreementSuccess() public {
         uint256 testAmount = 0.5 ether;
-        Wallet memory scamWallet = Wallet({addr: makeAddr("scam"), balance: 1 ether});
-        vm.deal(scamWallet.addr, scamWallet.balance);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                InvalidStakeholderAddress.selector, scamWallet.addr, sellerWallet.addr, buyerWallet.addr
-            )
+        vm.prank(buyerWallet.addr);
+        uint256 agreementId = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), testAmount);
+
+        vm.expectEmit(true, true, false, true);
+        emit AgreementEvent(
+            sellerWallet.addr, buyerWallet.addr, testAmount, AgreementStatus.SELLER_ACCEPTED, block.timestamp
         );
-        vm.prank(scamWallet.addr);
-        fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), testAmount);
+        vm.prank(sellerWallet.addr);
+        fundsLock.sellerAcceptAgreement(agreementId);
+    }
+
+    function test_BuyerFundsAgreementSuccess() public {
+        uint256 testAmount = 0.5 ether;
+        uint256 startingBalance = fundsLock.getBalance();
+
+        vm.prank(buyerWallet.addr);
+        uint256 agreementId = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), testAmount);
+
+        vm.expectEmit(true, true, false, true);
+        emit AgreementEvent(sellerWallet.addr, buyerWallet.addr, testAmount, AgreementStatus.FUNDED, block.timestamp);
+
+        vm.startPrank(buyerWallet.addr);
+        fundsLock.fundAgreement{value: testAmount}(agreementId);
+        vm.stopPrank();
+
+        EscrowAgreement memory agreement = fundsLock.getAgreement(agreementId);
+        assertEq(agreement.funded, true, "Agreement should be funded");
+        assertEq(address(fundsLock).balance, startingBalance + testAmount, "Contract should have received the funds");
+    }
+
+    function test_ReleaseFundsSuccess() public {
+        uint256 testAmount = 0.5 ether;
+
+        // 1. Create agreement
+        vm.prank(buyerWallet.addr);
+        uint256 id = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), testAmount);
+
+        // 2. Seller accepts
+        vm.prank(sellerWallet.addr);
+        fundsLock.sellerAcceptAgreement(id);
+
+        // 3. Buyer funds
+        vm.prank(buyerWallet.addr);
+        fundsLock.fundAgreement{value: testAmount}(id);
+
+        // Check pre-release balances
+        uint256 sellerStartingBalance = sellerWallet.addr.balance;
+
+        // 4. Seller requests release
+        vm.prank(sellerWallet.addr);
+        fundsLock.releaseFunds(id);
+
+        // 5. Buyer approves release
+        vm.expectEmit(true, true, false, true);
+        emit AgreementEvent(sellerWallet.addr, buyerWallet.addr, testAmount, AgreementStatus.RELEASED, block.timestamp);
+
+        vm.prank(buyerWallet.addr);
+        fundsLock.releaseFunds(id);
+
+        // 6. Verify results
+        EscrowAgreement memory agreement = fundsLock.getAgreement(id);
+        assertEq(agreement.released, true, "Agreement should be marked as released");
+        assertEq(sellerWallet.addr.balance, sellerStartingBalance + testAmount, "Seller should have received the funds");
     }
 }

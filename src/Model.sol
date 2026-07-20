@@ -13,13 +13,13 @@ enum AgreementStatus {
 
 struct EscrowAgreement {
     address seller;
-    address payable buyer;
-    uint256 amount;
     bool funded;
     bool sellerAccepted;
     bool sellerRequestedRelease;
     bool buyerApprovedRelease;
     bool released;
+    address payable buyer;
+    uint256 amount;
 }
 
 event AgreementEvent(
