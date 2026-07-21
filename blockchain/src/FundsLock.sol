@@ -6,6 +6,7 @@ pragma solidity ^0.8.35;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import "./Model.sol";
 import "./Errors.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract FundsLock is AccessControl {
     bytes32 public constant MEDIATOR_ROLE = keccak256("MEDIATOR_ROLE");

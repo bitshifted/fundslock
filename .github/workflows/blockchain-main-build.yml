@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'blockchain/**'
 
 jobs:
   build:
@@ -23,8 +25,6 @@ jobs:
           run: |
             make build
         - name: Configure version information
-          id: calculate-version
-          uses: bitshifted/git-auto-semver@v1
+          uses: ./.github/workflows/common-release.yaml
           with:
-            create_tag: true
-            initial_version: 0.1.0
+            target-prefix: 'sc-'
