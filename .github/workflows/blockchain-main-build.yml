@@ -27,7 +27,9 @@ jobs:
         - name: Build and test
           run: |
             make build
-        - name: Configure version information
-          uses: ./.github/workflows/common-release.yaml
-          with:
-            target-prefix: 'sc-'
+  release:
+    needs: build
+    uses: ./.github/workflows/common-release.yaml
+    with:
+      tag-prefix: 'sc-'
+
