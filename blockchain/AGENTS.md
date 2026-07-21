@@ -1,12 +1,12 @@
 # Agent Guidelines & Runbook (AGENTS.md)
 
-Welcome, AI Agent! This file serves as your comprehensive instruction manual and onboarding guide for working in the **fundslock** repository. It contains our architectural layout, domain model, operational commands, coding guidelines, and testing requirements to ensure your contributions align perfectly with our standards.
+Welcome, AI Agent! This file serves as your comprehensive instruction manual and onboarding guide for working in the **blockchain** directory. It contains our architectural layout, domain model, operational commands, coding guidelines, and testing requirements to ensure your contributions align perfectly with our standards.
 
 ---
 
 ## 1. Repository Overview
 
-**fundslock** is a decentralized escrow system implemented as an EVM smart contract. It enables buyers and sellers to establish secure agreements, fund contracts, request/approve releases, and engage in mediator-driven dispute resolutions.
+**fundslock** is a decentralized escrow system implemented as an EVM smart contract, with off-chain backend and frontend component. It enables buyers and sellers to establish secure agreements, fund contracts, request/approve releases, and engage in mediator-driven dispute resolutions. This directory (`blockchain`) contains smart contract implementation.
 
 ### Key Technology Stack
 - **Smart Contracts:** Solidity (`^0.8.35`)
