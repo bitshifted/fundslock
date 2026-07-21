@@ -4,10 +4,15 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - 'blockchain/**'
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./blockchain
     permissions:
       pull-requests: write
       contents: read
@@ -32,11 +37,14 @@ jobs:
       - name: Post Coverage Comment to PR
         uses: kefasjw/lcov-pull-request-report@v1
         with:
-          lcov-file: ./lcov.info
+          lcov-file: ./blockchain/lcov.info
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-title: "📊 Foundry Test Coverage Report"
   static-analysis:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./blockchain
     needs: build-and-test
     steps:
       - name: Checkout code
@@ -53,6 +61,9 @@ jobs:
           make static-analysis
   integration-tests:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./blockchain
     needs: build-and-test
     steps:
       - name: Checkout code
