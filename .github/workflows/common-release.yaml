@@ -10,9 +10,6 @@ on:
 jobs:
   release:
     runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: ./blockchain
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
