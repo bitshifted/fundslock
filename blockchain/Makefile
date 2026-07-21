@@ -7,14 +7,18 @@ check-python:
 	@command -v python3 >/dev/null 2>&1 || { echo "Error: Python3 is not installed."; exit 1; }
 	@echo "Python3 is installed at: $$(which python3)"
 
-
-# Initialize project (create virtual environment and install dependencies)
-init-project: check-python
-	@echo "Initializing project..."
+python-venv-setup: check-python
 	@python3 -m venv .venv
 	@echo "Installing dependencies..."
 	@.venv/bin/pip3 install -r requirements.txt
+
+solidity-deps-install:
+	@echo "Installing Solidity/Foundry dependencies"
 	@forge install
+
+# Initialize project (create virtual environment and install dependencies)
+init-project: python-venv-setup solidity-deps-install
+	@echo "Project initialized."
 
 copyright-check:
 	@echo "Checking license headers..."

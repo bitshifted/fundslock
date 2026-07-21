@@ -21,9 +21,9 @@ jobs:
             submodules: recursive
         - name: Install Foundry
           uses: foundry-rs/foundry-toolchain@v1
-        - name: Initialize project
+        - name: Install dependencies
           run: |
-            make init-project
+            make solidity-deps-install
         - name: Build and test
           run: |
             make build
