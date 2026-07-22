@@ -26,3 +26,7 @@ jobs:
       - name: Build and test
         run: |
           make build
+      - name: Post Coverage Report to PR
+        uses: fgrosse/go-coverage-report@v1.3.0
+        with:
+          coverage-file-name: coverage.out
