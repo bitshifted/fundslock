@@ -1,0 +1,31 @@
+# Compiler files
+cache/
+out/
+zkout/
+
+# Commonly ignored directories
+.logs/
+.ignore/
+foundry.lock
+
+# Ignores development broadcast logs
+broadcast/
+
+# Docs
+docs/
+
+# Dotenv file
+.env
+.env.*
+!.env.example
+
+# Python .venv files
+.venv/
+
+# Integration test output
+testout/
+lcov.info
+
+# VSCode files
+.vscode/
+
