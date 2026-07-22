@@ -1,0 +1,34 @@
+name: Build and tag main branch
+
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
+            fetch-tags: true
+        - name: Setup Go
+          uses: actions/setup-go@v4
+          with: 
+            go-version: '1.25.5'
+        - name: Build and test
+          run: |
+            make build
+  release:
+    needs: build
+    uses: ./.github/workflows/common-release.yaml
+    with:
+      tag-prefix: 'be-'
