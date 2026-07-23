@@ -1,4 +1,4 @@
-name: BlockcGraphhain - Build and test pull request
+name: \Graph - Build and test pull request
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./blockchain
+        working-directory: ./graph
     permissions:
       pull-requests: write
       contents: read

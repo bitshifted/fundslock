@@ -31,7 +31,6 @@ contract DeployPublic is Script {
         string memory abiContent = vm.readFile("out/FundsLock.sol/FundsLock.json");
         vm.writeFile("../graph/abis/FundsLock.json", abiContent);
         console.log("ABI copied to Graph protocol config");
-        
         // update values in Graph protocol networks config
         string[] memory cmds = new string[](3);
         cmds[0] = "bash";
