@@ -8,9 +8,9 @@ dataSources:
     name: FundsLock
     network: sepolia
     source:
-      address: "0xC92Ee4c31D5a64cD1125C37DB1Be77906880Baf8"
       abi: FundsLock
-      startBlock: 11334011
+      address: "0x00c042C4D5D913277CE16611a2ce6e9003554aD5"
+      startBlock: 403
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9

@@ -1,10 +1,10 @@
 {
   "name": "fundslock-sepolia-eth",
-  "license": "UNLICENSED",
+  "license": "MPL2.0",
   "scripts": {
     "codegen": "graph codegen",
-    "build": "graph build",
-    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ fundslock-sepolia-eth",
+    "build:sepolia": "graph build --network sepolia --network-file networks.json",
+    "deploy:sepolia": "graph deploy --node https://api.studio.thegraph.com/deploy/ --network sepolia --network-file networks.json fundslock-sepolia-eth",
     "create-local": "graph create --node http://localhost:8020/ fundslock-sepolia-eth",
     "remove-local": "graph remove --node http://localhost:8020/ fundslock-sepolia-eth",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 fundslock-sepolia-eth",

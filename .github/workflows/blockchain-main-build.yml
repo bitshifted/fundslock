@@ -1,4 +1,4 @@
-name: Build and tag main branch
+name: Blockchain - Build and tag main branch
 
 
 on:
