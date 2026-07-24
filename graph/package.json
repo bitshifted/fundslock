@@ -8,7 +8,7 @@
     "create-local": "graph create --node http://localhost:8020/ fundslock-sepolia-eth",
     "remove-local": "graph remove --node http://localhost:8020/ fundslock-sepolia-eth",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 fundslock-sepolia-eth",
-    "test": "graph test"
+    "test": "graph test -d"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.98.1",
