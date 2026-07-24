@@ -1,0 +1,35 @@
+specVersion: 1.3.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: FundsLock
+    network: sepolia
+    source:
+      abi: FundsLock
+      address: "0x00c042C4D5D913277CE16611a2ce6e9003554aD5"
+      startBlock: 403
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - AgreementEvent
+        - RoleAdminChanged
+        - RoleGranted
+        - RoleRevoked
+      abis:
+        - name: FundsLock
+          file: ./abis/FundsLock.json
+      eventHandlers:
+        - event: AgreementEvent(indexed address,indexed address,uint256,uint8,uint256)
+          handler: handleAgreementEvent
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
+      file: ./src/funds-lock.ts

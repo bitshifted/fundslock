@@ -1,4 +1,4 @@
-name: Build and test pull request
+name: Blockchain - Build and test pull request
 
 on:
   pull_request:

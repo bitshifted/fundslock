@@ -1,0 +1,53 @@
+name: Graph - Build and release main branch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'graph/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./graph
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Graph CLI Global (Optional)
+        run: npm install -g @graphprotocol/graph-cli
+      - name: Install dependencies
+        run: |
+          npm install
+      - name: Generate Code from Schema
+        run: npm run codegen
+      - name: Build and test Seplia Subgraph
+        run: npm run build:sepolia && npm run test
+      - name: AUthorize graph
+        run: graph auth ${GRAPH_SEPOLIA_ETH_KEY}
+      - name: Configure version information
+        id: calculate-version
+        uses: bitshifted/git-auto-semver@v2
+        with:
+          create_tag: true
+          initial_version: '1.0.0'
+          tag_prefix: 'gr-'
+      - name: Setup environment variables
+        run: |
+           echo "VERSION_LABEL=${{ steps.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
+      - name: Deploy Graph to Sepolia
+        run: |
+          echo "Version label: $VERSION_LABEL"
+          npm run deploy:sepolia --  --version-label $VERSION_LABEL
