@@ -17,6 +17,8 @@ Once the subgraph is created, note the API key associated with it.
 
 ## Deployment
 
+Before attempting deploymend, create Github secret named `GRAPH_SEPOLIA_ETH_KEY`, and set it's value to the API key found in Subgraph Studio in previous step.
+
 Deployment is done autmomatically via Github Action. The process is the following:
 
 1. dpeloy smart contract using instructions provided in [blockchain README](../blockchain/README.md#deploying-to-testmainnet-using-aws-kms)
