@@ -41,7 +41,7 @@ jobs:
         id: calculate-version
         uses: bitshifted/git-auto-semver@v2
         with:
-          create_tag: false
+          create_tag: true
           initial_version: '1.0.0'
           tag_prefix: 'gr-'
       - name: Setup environment variables
