@@ -19,7 +19,7 @@ contract DeployPublic is Script {
     FundsLock internal fundsLock;
 
     function run() public {
-        string memory networkName = vm.envString("NETWORK_NAME");
+        string memory networkName = vm.envOr("NETWORK_NAME", string("sepolia"));
         console.log("Deploying to network: ", networkName);
         vm.startBroadcast();
         fundsLock = new FundsLock();
