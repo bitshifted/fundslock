@@ -15,7 +15,7 @@ jobs:
         working-directory: ./graph
     permissions:
       pull-requests: write
-      contents: read
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
         uses: bitshifted/git-auto-semver@v2
         with:
           create_tag: true
-          initial_version: '1.0.0'
+          initial_version: '1.0.1'
           tag_prefix: 'gr-'
       - name: Setup environment variables
         run: |
