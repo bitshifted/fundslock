@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Install Graph CLI Global (Optional)
+      - name: Install Graph CLI Global
         run: npm install -g @graphprotocol/graph-cli
       - name: Install dependencies
         run: |
@@ -35,7 +35,9 @@ jobs:
         run: npm run codegen
       - name: Build and test Seplia Subgraph
         run: npm run build:sepolia && npm run test
-      - name: AUthorize graph
+      - name: Authorize graph
+        env:
+          GRAPH_SEPOLIA_ETH_KEY: ${{ secrets.GRAPH_SEPOLIA_ETH_KEY }}
         run: graph auth ${GRAPH_SEPOLIA_ETH_KEY}
       - name: Configure version information
         id: calculate-version
