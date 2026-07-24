@@ -35,13 +35,13 @@ jobs:
         run: npm run codegen
       - name: Build and test Seplia Subgraph
         run: npm run build:sepolia && npm run test
-      - name: AUthorize graph
-        run: graph auth ${GRAPH_SEPOLIA_ETH_KEY}
+    #   - name: AUthorize graph
+    #     run: graph auth ${GRAPH_SEPOLIA_ETH_KEY}
       - name: Configure version information
         id: calculate-version
         uses: bitshifted/git-auto-semver@v2
         with:
-          create_tag: true
+          create_tag: false
           initial_version: '1.0.0'
           tag_prefix: 'gr-'
       - name: Setup environment variables
@@ -50,4 +50,4 @@ jobs:
       - name: Deploy Graph to Sepolia
         run: |
           echo "Version label: $VERSION_LABEL"
-          npm run deploy:sepolia --  --version-label $VERSION_LABEL
+        #   npm run deploy:sepolia --  --version-label $VERSION_LABEL
