@@ -21,3 +21,5 @@ error FundsLock_InvalidAgreementStatusTransition(AgreementStatus current, Agreem
 
 error FundsLock_InvalidAmount(uint256 required, uint256 provided);
 
+error FundsLock_SellerNotAccepted(uint256 id);
+
