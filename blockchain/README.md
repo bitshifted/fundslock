@@ -140,6 +140,12 @@ cast send $CONTRACT_ADDRESS "sellerAcceptAgreement(uint256)"  100 --rpc-url $RPC
 cast send $CONTRACT_ADDRESS "fundAgreement(uint256)"  100 --value 0.01ether --rpc-url $RPC_URL --private-key $BUYER_PRIVATE_KEY
 ```
 
+### Seller request release
+
+```
+cast send $CONTRACT_ADDRESS "requestRelease(uint256)"  100 --rpc-url $RPC_URL --private-key $SELLER_PRIVATE_KEY
+```
+
 ### Release funds
 
 ```
