@@ -49,12 +49,13 @@ contract FundsLock is AccessControl {
             buyerApprovedRelease: false,
             released: false
         });
-        agreements[idCounter++] = agreement;
-        emit AgreementEvent(seller, buyer, amount, AgreementStatus.CREATED, block.timestamp);
+        uint256 id = idCounter++;
+        agreements[id] = agreement;
+        emit AgreementCreated(id, seller, buyer, amount, block.timestamp);
         if (sellerAccepted) {
-            emit AgreementEvent(seller, buyer, amount, AgreementStatus.SELLER_ACCEPTED, block.timestamp);
+            emit AgreementEvent(seller, buyer, id, AgreementStatus.SELLER_ACCEPTED, block.timestamp);
         }
-        return idCounter - 1; // return the id of the newly created agreement (current id - 1)
+        return id;
     }
 
     function sellerAcceptAgreement(uint256 id) public {
@@ -69,8 +70,26 @@ contract FundsLock is AccessControl {
             revert FundsLock_AlreadyAccepted(id);
         }
         agreement.sellerAccepted = true;
+        emit AgreementEvent(agreement.seller, agreement.buyer, id, AgreementStatus.SELLER_ACCEPTED, block.timestamp);
+    }
+
+    function requestRelease(uint256 id) public {
+        EscrowAgreement storage agreement = agreements[id];
+        // Checks
+        if (!agreementFound(agreement)) {
+            revert FundsLock_AgreementNotFound(id);
+        }
+        // only seller can request releasing funds
+        if (msg.sender != agreement.seller) {
+            revert FundsLock_InvalidStakeholderAddress(msg.sender, agreement.seller, agreement.buyer);
+        }
+        // seller must have accepted the agreement
+        if (!agreement.sellerAccepted) {
+            revert FundsLock_SellerNotAccepted(id);
+        }
+        agreement.sellerRequestedRelease = true;
         emit AgreementEvent(
-            agreement.seller, agreement.buyer, agreement.amount, AgreementStatus.SELLER_ACCEPTED, block.timestamp
+            agreement.seller, agreement.buyer, id, AgreementStatus.SELLER_REQUESTED_RELEASE, block.timestamp
         );
     }
 
@@ -93,9 +112,7 @@ contract FundsLock is AccessControl {
 
         // Effects: Funds are automatically transferred to the contract balance because the function is `payable`.
         agreement.funded = true;
-        emit AgreementEvent(
-            agreement.seller, agreement.buyer, agreement.amount, AgreementStatus.FUNDED, block.timestamp
-        );
+        emit AgreementEvent(agreement.seller, agreement.buyer, id, AgreementStatus.FUNDED, block.timestamp);
     }
 
     function agreementFound(EscrowAgreement storage agreement) private view returns (bool) {
@@ -127,9 +144,7 @@ contract FundsLock is AccessControl {
         if (agreement.sellerRequestedRelease && agreement.buyerApprovedRelease) {
             require(!agreement.released, "Funds already released");
             agreement.released = true;
-            emit AgreementEvent(
-                agreement.seller, agreement.buyer, agreement.amount, AgreementStatus.RELEASED, block.timestamp
-            );
+            emit AgreementEvent(agreement.seller, agreement.buyer, id, AgreementStatus.RELEASED, block.timestamp);
             payable(agreement.seller).transfer(agreement.amount);
             // (bool success,) = agreement.seller.call{value: agreement.amount}("");
             // require(success, "Failed to send Ether");

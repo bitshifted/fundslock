@@ -100,3 +100,48 @@ In addition to AWS environment variables defined above, define some additional v
 * `NETWORK_RPC_URL` - RPC URL of the network where you are deploying the contract
 
 Then, run `make deploy-contract-public`. It will deploy the contract to requested network and print out contract address.
+
+## Interacting with the contract
+
+This section shows how to interact with the contract usinf `cast` tool. Requirements:
+
+* cast (Foundry) installed
+* Buyer address
+* Seller address
+* private key for each address
+* some ETH to cover transaction fees and fund the agreement
+
+All addresses can be created in MetaMask or similar wallet for testing purposes.
+
+export the following environment variables:
+
+* `CONTRACT_ADDRESS` - address of deployed contract
+* `BUYER_ADDRESS` - buyer wallet address
+* `SELLER_ADDRESS` - seller wallet address
+* `BUYER_PRIVATE_KEY` - buyer wallet private key
+* `SELLER_PRIVATE_KEY` - seller wallet private key
+* `RPC_URL` - network RPC URL
+
+
+### Create agreement
+
+```
+cast send $CONTRACT_ADDRESS "createAgreement(address,address payable,uint256)(uint256)" $SELLER_ADDRESS $BUYER_ADDRESS  10000000000000000 --rpc-url $RPC_URL --private-key $BUYER_PRIVATE_KEY
+```
+
+### Seler accept agreement
+
+```
+cast send $CONTRACT_ADDRESS "sellerAcceptAgreement(uint256)"  100 --rpc-url $RPC_URL --private-key $SELLER_PRIVATE_KEY
+```
+### Buyer fund agreement
+
+```
+cast send $CONTRACT_ADDRESS "fundAgreement(uint256)"  100 --value 0.01ether --rpc-url $RPC_URL --private-key $BUYER_PRIVATE_KEY
+```
+
+### Release funds
+
+```
+cast send $CONTRACT_ADDRESS "releaseFunds(uint256)"  100  --rpc-url $RPC_URL --private-key $BUYER_PRIVATE_KEY
+```

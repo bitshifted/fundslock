@@ -7,6 +7,8 @@ enum AgreementStatus {
     CREATED,
     FUNDED,
     SELLER_ACCEPTED,
+    SELLER_REQUESTED_RELEASE,
+    BUYER_APPROVED_RELEASE,
     RELEASED,
     CANCELLED
 }
@@ -22,6 +24,10 @@ struct EscrowAgreement {
     uint256 amount;
 }
 
+event AgreementCreated(
+    uint256 indexed id, address indexed seller, address indexed buyer, uint256 amount, uint256 timestamp
+);
+
 event AgreementEvent(
-    address indexed seller, address indexed buyer, uint256 amount, AgreementStatus status, uint256 timestamp
+    address indexed seller, address indexed buyer, uint256 indexed id, AgreementStatus status, uint256 timestamp
 );

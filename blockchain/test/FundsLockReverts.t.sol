@@ -126,6 +126,39 @@ contract FundsLockReverts is Test {
         fundsLock.fundAgreement{value: amount / 2}(id);
     }
 
+    // requestRelease() tests
+
+    function test_RequestReleaseFailsWhenAgreementNotFound() public {
+        vm.expectRevert(abi.encodeWithSelector(FundsLock_AgreementNotFound.selector, 12345));
+        vm.prank(sellerWallet.addr);
+        fundsLock.requestRelease(12345);
+    }
+
+    function test_RequestReleaseFailsWhenNotSeller() public {
+        vm.prank(buyerWallet.addr);
+        uint256 id = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), 1 ether);
+
+        Wallet memory scamWallet = helper.createWallet("scam", 1 ether);
+        vm.deal(scamWallet.addr, scamWallet.balance);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                FundsLock_InvalidStakeholderAddress.selector, scamWallet.addr, sellerWallet.addr, buyerWallet.addr
+            )
+        );
+        vm.prank(scamWallet.addr);
+        fundsLock.requestRelease(id);
+    }
+
+    function test_RequestReleaseFailsWhenSellerNotAccepted() public {
+        vm.prank(buyerWallet.addr);
+        uint256 id = fundsLock.createAgreement(sellerWallet.addr, payable(buyerWallet.addr), 1 ether);
+
+        vm.expectRevert(abi.encodeWithSelector(FundsLock_SellerNotAccepted.selector, id));
+        vm.prank(sellerWallet.addr);
+        fundsLock.requestRelease(id);
+    }
+
     // releaseFunds() tests
 
     function test_ReleaseFundsFailsWhenAgreementNotFound() public {
