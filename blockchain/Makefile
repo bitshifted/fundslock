@@ -36,6 +36,9 @@ copyright-check:
 		exit 1; \
 	fi
 
+clean:
+	@echo "cleaning output directory..."
+	froge clean
 
 format-check:
 	@echo "Checking code formatting..."
@@ -81,7 +84,7 @@ deploy-contract-kurtosis: start-testnet
 	mkdir testout; \
 	forge script script/deploy/DeployLocal.s.sol --rpc-url $$KURTOSIS_RPC_URL --broadcast --slow --delay 10
 
-deploy-contract-public:
+deploy-contract-public: clean
 	@echo "Deploying contract to $$NETWORK_RPC_URL"; \
 	forge script script/deploy/DeployPublic.s.sol --rpc-url $$NETWORK_RPC_URL --broadcast --slow --aws
 

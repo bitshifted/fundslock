@@ -1,8 +1,8 @@
 {
   "sepolia": {
     "FundsLock": {
-      "address": "0xC92Ee4c31D5a64cD1125C37DB1Be77906880Baf8",
-      "startBlock": 11334011
+      "address": "0x9F64020f94239761b6cC4C109F070A5Cf25BEc41",
+      "startBlock": 11357085
     }
   }
 }

@@ -16,6 +16,7 @@ dataSources:
       apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
+        - AgreementCreated
         - AgreementEvent
         - RoleAdminChanged
         - RoleGranted
@@ -24,6 +25,8 @@ dataSources:
         - name: FundsLock
           file: ./abis/FundsLock.json
       eventHandlers:
+        - event: AgreementCreated(indexed uint256, indexed address,indexed address,uint256,uint256)
+          handler: handleAgreementCreated
         - event: AgreementEvent(indexed address,indexed address,uint256,uint8,uint256)
           handler: handleAgreementEvent
         - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
