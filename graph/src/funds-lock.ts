@@ -33,6 +33,7 @@ export function handleAgreementCreated(event: AgreementCreatedEvent) : void {
   entity.buyer = event.params.buyer
   entity.agreement_id = event.params.id
   entity.amount = event.params.amount
+  entity.status = 0
   entity.timestamp = event.params.timestamp
 
 
