@@ -16,7 +16,7 @@ func main() {
 	ctx := kong.Parse(&input)
 	log.Init(debugLoggingEnabled(ctx.Args))
 	log.Logger.Info().Msg("Starting server...")
-	log.Logger.Debug().Msg("Debug loggin enabled")
+	log.Logger.Debug().Msg("Debug logging enabled")
 	err := ctx.Run()
 	if err != nil {
 		log.Logger.Fatal().Err(err).Msg("Failed to run command")
