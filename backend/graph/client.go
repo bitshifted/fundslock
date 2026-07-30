@@ -27,6 +27,7 @@ type AgreementLog struct {
 }
 
 type AgreementLogsQuery struct {
+	//nolint:lll
 	AgreementLogs []AgreementLog `graphql:"agreementLogs(where: { or: [{ seller: $userAddress }, { buyer: $userAddress }] }, orderBy: timestamp, orderDirection: desc, first: $first, skip: $skip)"`
 }
 
@@ -60,8 +61,7 @@ func (g *HasuraGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]A
 	return query.AgreementLogs, nil
 }
 
-func NewGraphqlClient(endpoint string, authToken string) GraphqlClient {
-
+func NewGraphqlClient(endpoint, authToken string) GraphqlClient {
 	client := graphql.NewClient(endpoint, http.DefaultClient).WithRequestModifier(func(r *http.Request) {
 		r.Header.Set("Authorization", fmt.Sprintf("%s %s", "Bearer", authToken))
 	})

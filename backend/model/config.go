@@ -1,3 +1,6 @@
+// Copyright 2026 Bitshift ED
+// SPDX-License-Identifier: MPL-2.0
+
 package model
 
 import (
@@ -25,16 +28,15 @@ func NewConfigurationLoader() ConfifgurationLoader {
 func (e *EnvironmentVariableConfigurationLoader) Load() (*ConfigurationVariables, error) {
 	graphUrl := os.Getenv("GRAPH_URL")
 	if graphUrl == "" {
-		return nil, errors.New("Configuration variable GRAPH_URL not set")
+		return nil, errors.New("configuration variable GRAPH_URL not set")
 	}
 	graphApiKey := os.Getenv("GRAPH_API_KEY")
 	if graphApiKey == "" {
-		return nil, errors.New("Configuration variable GRAPH_API_KEY not set")
+		return nil, errors.New("configuration variable GRAPH_API_KEY not set")
 	}
 
 	return &ConfigurationVariables{
 		GraphUrl:    graphUrl,
 		GraphApiKey: graphApiKey,
 	}, nil
-
 }

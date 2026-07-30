@@ -14,7 +14,7 @@ type agreementClient struct {
 	client graph.GraphqlClient
 }
 
-func newAgreementClient(endpoint string, authToken string) *agreementClient {
+func newAgreementClient(endpoint, authToken string) *agreementClient {
 	return &agreementClient{
 		client: graph.NewGraphqlClient(endpoint, authToken),
 	}
@@ -33,12 +33,12 @@ func (ac *agreementClient) getAgreements(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("Failed to encode response")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Failed to encode response"))
+		_, err1 := w.Write([]byte("Failed to encode response"))
+		if err1 != nil {
+			log.Logger.Error().Err(err1).Msg("Failed to write response")
+		}
 		return
 	}
-	// for _, agreement := range agreements {
-	// 	log.Logger.Info().Msgf("Agreement: %+v", agreement)
-	// }
 }
 
 func (ac *agreementClient) createAgreement(w http.ResponseWriter, r *http.Request) {
