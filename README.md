@@ -6,3 +6,5 @@ FundsLock is  decentralized escrow system running on blockchain. It consists of 
 
 * [blockchain](./blockchain/) - Solidity/Foundry project implementing smart contract for escrow
 * [backend](./backend/) - Go-based REST API server
+* [graph](./graph/) - Graph protocol subgraph for events/log querying
+
