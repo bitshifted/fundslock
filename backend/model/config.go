@@ -9,12 +9,13 @@ import (
 )
 
 type ConfigurationVariables struct {
-	GraphUrl    string
-	GraphApiKey string
+	GraphUrl     string
+	GraphApiKey  string
+	JwtSecretKey []byte
 }
 
 type ConfifgurationLoader interface {
-	Load() (*ConfigurationVariables, error)
+	Load() error
 }
 
 type EnvironmentVariableConfigurationLoader struct {
@@ -25,18 +26,23 @@ func NewConfigurationLoader() ConfifgurationLoader {
 	return &EnvironmentVariableConfigurationLoader{}
 }
 
-func (e *EnvironmentVariableConfigurationLoader) Load() (*ConfigurationVariables, error) {
+var AppConfig = ConfigurationVariables{}
+
+func (e *EnvironmentVariableConfigurationLoader) Load() error {
 	graphUrl := os.Getenv("GRAPH_URL")
 	if graphUrl == "" {
-		return nil, errors.New("configuration variable GRAPH_URL not set")
+		return errors.New("configuration variable GRAPH_URL not set")
 	}
 	graphApiKey := os.Getenv("GRAPH_API_KEY")
 	if graphApiKey == "" {
-		return nil, errors.New("configuration variable GRAPH_API_KEY not set")
+		return errors.New("configuration variable GRAPH_API_KEY not set")
 	}
-
-	return &ConfigurationVariables{
-		GraphUrl:    graphUrl,
-		GraphApiKey: graphApiKey,
-	}, nil
+	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
+	if jwtSecretKey == "" {
+		return errors.New("configuration variable JWT_SECRET_KEY not set")
+	}
+	AppConfig.GraphUrl = graphUrl
+	AppConfig.GraphApiKey = graphApiKey
+	AppConfig.JwtSecretKey = []byte(jwtSecretKey)
+	return nil
 }
