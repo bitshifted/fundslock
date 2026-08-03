@@ -1,3 +1,6 @@
+// Copyright 2026 Bitshift ED
+// SPDX-License-Identifier: MPL-2.0
+
 package auth
 
 import (
@@ -9,32 +12,25 @@ import (
 	"github.com/spruceid/siwe-go"
 )
 
-func VerifyMessage(requset model.SIWEVerificationRequest) (*model.TokenPair, error) {
+// VerifyMessage verifies the SIWE message and returns wallet address if the verification is successful.
+func VerifyMessage(requset model.SIWEVerificationRequest) (string, error) {
 	siweMsg, err := siwe.ParseMessage(requset.Message)
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("Failed to parse SIWE message")
-		return nil, err
+		return "", err
 	}
 	fmt.Println("Parsed SIWE message:", siweMsg)
 	nonceExpirationTime := nonceStore[requset.Nonce]
 	if nonceExpirationTime.Before(time.Now()) {
 		log.Logger.Error().Msg("Invalid or expired nonce")
-		return nil, fmt.Errorf("invalid or expired nonce")
+		return "", fmt.Errorf("invalid or expired nonce")
 	}
 	removeNonce(requset.Nonce)
 
 	_, err = siweMsg.Verify(requset.Signature, nil, &requset.Nonce, nil)
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("Failed to verify SIWE message")
-		return nil, err
+		return "", err
 	}
-	walletAddress := siweMsg.GetAddress().Hex()
-	tokens, err := GenerateTokens(walletAddress)
-	if err != nil {
-		log.Logger.Error().Err(err).Msg("Failed to generate tokens:")
-		return nil, err
-	}
-	log.Logger.Info().Msgf("Generated tokens for wallet %s: ", walletAddress)
-	return tokens, nil
-
+	return siweMsg.GetAddress().Hex(), nil
 }

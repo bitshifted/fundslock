@@ -42,6 +42,7 @@ func Start() error {
 	router.Group(func(r chi.Router) {
 		r.Get("/api/v1/auth/nonce", createNonce)
 		r.Post("/api/v1/auth/verify", verifySIWEMessage)
+		r.Get("/api/v1/auth/refresh", refreshAccessToken)
 	})
 
 	server := http.Server{

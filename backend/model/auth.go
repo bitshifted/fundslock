@@ -8,8 +8,12 @@ type Nonce struct {
 }
 
 type TokenPair struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string
+	RefreshToken string
+}
+
+type AccessTokenResponse struct {
+	AccessToken string `json:"access_token"`
 }
 
 type SIWEVerificationRequest struct {

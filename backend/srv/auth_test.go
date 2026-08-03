@@ -1,3 +1,6 @@
+// Copyright 2026 Bitshift ED
+// SPDX-License-Identifier: MPL-2.0
+
 package srv
 
 import (
@@ -32,5 +35,4 @@ func Test_createNonce(t *testing.T) {
 	if nonce.Nonce == "" {
 		t.Errorf("Nonce is empty")
 	}
-
 }

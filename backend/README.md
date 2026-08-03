@@ -22,3 +22,7 @@ This performs linting, building and testing, including coverage report. Build ar
 
 To run the project locally, use `go run main.go start`. This start the server on port 3000.
 
+# Authentication
+
+Backend uses JWT tokens and wallet signing to authenticate users. Once user connetcs the wallet in frontend, they are prompted to authenticate with SIWE (Sign In With Ethereum) message. Based on the message, backend issues access token and refresh token.
+

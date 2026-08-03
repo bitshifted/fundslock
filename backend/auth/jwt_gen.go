@@ -1,3 +1,6 @@
+// Copyright 2026 Bitshift ED
+// SPDX-License-Identifier: MPL-2.0
+
 package auth
 
 import (
@@ -12,6 +15,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const (
+	nonceSize = 16 // 16 bytes for nonce
+)
+
 var (
 	nonceStore = make(map[string]time.Time)
 )
@@ -21,21 +28,13 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func nonceValue(nonceId string) time.Time {
-	expiration, exists := nonceStore[nonceId]
-	if !exists {
-		return time.Unix(0, 0)
-	}
-	return expiration
-}
-
 func removeNonce(nonce string) {
 	delete(nonceStore, nonce)
 }
 
 func GenerateNonce() model.Nonce {
 	log.Logger.Info().Msg("Creating nonce")
-	b := make([]byte, 16)
+	b := make([]byte, nonceSize)
 	_, _ = rand.Read(b)
 	nonce := model.Nonce{
 		Nonce: hex.EncodeToString(b),
@@ -56,7 +55,7 @@ func GenerateTokens(walletAddress string) (*model.TokenPair, error) {
 		WalletAddress: walletAddress,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute)), // Access token valid for 15 minutes
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(model.AppConfig.AccessTokenDuration) * time.Second)),
 			Subject:   walletAddress,
 		},
 	}
@@ -67,9 +66,9 @@ func GenerateTokens(walletAddress string) (*model.TokenPair, error) {
 		return nil, err
 	}
 
-	//  Refresh Token Claims (7 days)
+	//  Refresh Token Claims
 	refreshClaims := jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(now.Add(7 * time.Hour * 24)),
+		ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(model.AppConfig.RefreshTokenDuration) * time.Second)),
 		IssuedAt:  jwt.NewNumericDate(now),
 		Subject:   walletAddress,
 	}
