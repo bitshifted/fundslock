@@ -125,7 +125,7 @@ We use a strict `golangci-lint` setup (`.golangci.yml`). Ensure that you:
 
 We aim for comprehensive coverage on any added features or bug fixes.
 1. **Unit Testing:** Write unit tests using the standard Go `testing` package (and optionally asserting libraries already established in `go.mod`/`go.sum`). Keep tests alongside the implementation with the suffix `_test.go`.
-2. **Mocking & Isolation:** When implementing network or external dependency-reliant code, write mocks or use interfaces to facilitate unit testing without external resources.
+2. **Mocking & Isolation:** When implementing network or external dependency-reliant code, write mocks or use interfaces to facilitate unit testing without external resources. Use `mockgen` library to generate mocks. Mock file names should follow tha pattern `foo.go` -> `foo_mock.go`.
 3. **Execution:** Always verify your changes pass by running `make test`. Ensure coverage does not regress.
 
 ---

@@ -1,6 +1,6 @@
 # Agent Guidelines & Runbook (AGENTS.md)
 
-his file serves as your comprehensive instruction manual and onboarding guide for working in the **fundslock** repository. It contains our architectural layout, domain model, operational commands, coding guidelines, and testing requirements.
+This file serves as your comprehensive instruction manual and onboarding guide for working in the **fundslock** repository. It contains our architectural layout, domain model, operational commands, coding guidelines, and testing requirements.
 
 ## Project overview
 
@@ -12,5 +12,6 @@ The repository consists of the following component.
 
 * `blockchain` - Solidity/Foundry project implementing smart contract for escrow
 * `backend` - Go-based REST API server
+* `graph` - Graph protocol subgraph for events/log querying
 
 Each component has it's own `AGENTS,md` file with instruction specific to the component.
