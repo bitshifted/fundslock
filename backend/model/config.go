@@ -67,7 +67,8 @@ func (e *EnvironmentVariableConfigurationLoader) Load() error {
 	}
 	cookieDDomain := os.Getenv("COOKIE_DOMAIN")
 	if cookieDDomain == "" {
-		return errors.New("configuration variable COOKIE_DOMAIN not set. Set it to the domain of your application (e.g., localhost for local development)")
+		return errors.New("configuration variable COOKIE_DOMAIN not set." +
+			"Set it to the domain of your application (e.g., localhost for local development)")
 	}
 	AppConfig.GraphUrl = graphUrl
 	AppConfig.GraphApiKey = graphApiKey

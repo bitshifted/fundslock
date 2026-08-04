@@ -1,6 +1,6 @@
 # Agent Guidelines & Runbook (AGENTS.md)
 
-his file serves as your comprehensive instruction manual and onboarding guide for working in the **fundslock** repository. It contains our architectural layout, domain model, operational commands, coding guidelines, and testing requirements.
+This file serves as your comprehensive instruction manual and onboarding guide for working in the **fundslock** repository. It contains our architectural layout, domain model, operational commands, coding guidelines, and testing requirements.
 
 ## Project overview
 
