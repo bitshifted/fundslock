@@ -25,7 +25,7 @@ var (
 
 type Claims struct {
 	WalletAddress string `json:"wallet_address"`
-	ChainId       uint32 `json:"chain_id"`
+	ChainId       int    `json:"chain_id"`
 	jwt.RegisteredClaims
 }
 
@@ -47,7 +47,7 @@ func GenerateNonce() model.Nonce {
 	return nonce
 }
 
-func GenerateTokens(walletAddress string, chainId uint32) (*model.TokenPair, error) {
+func GenerateTokens(walletAddress string, chainId int) (*model.TokenPair, error) {
 	if len(model.AppConfig.JwtSecretKey) == 0 {
 		return nil, errors.New("JWT secret key is not set in environment variables")
 	}

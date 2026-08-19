@@ -23,5 +23,5 @@ type SIWEVerificationRequest struct {
 
 type SessionData struct {
 	WalletAddress string `json:"address"`
-	ChainId       uint32 `json:"chainId"`
+	ChainId       int    `json:"chainId"`
 }

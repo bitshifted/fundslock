@@ -45,7 +45,7 @@ func VerifyMessage(requset model.SIWEVerificationRequest) (*model.SessionData, e
 	}
 	return &model.SessionData{
 		WalletAddress: siweMsg.GetAddress().Hex(),
-		ChainId:       uint32(siweMsg.GetChainID()),
+		ChainId:       siweMsg.GetChainID(),
 	}, nil
 }
 

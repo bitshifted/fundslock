@@ -14,10 +14,14 @@ import (
 	"github.com/go-chi/jwtauth"
 )
 
+const (
+	cookieExpirationPeriod = 6
+)
+
 var tokenAuth *jwtauth.JWTAuth
 
 func jwtInit() {
-	tokenAuth = jwtauth.New("HS256", []byte(model.AppConfig.JwtSecretKey), nil)
+	tokenAuth = jwtauth.New("HS256", (model.AppConfig.JwtSecretKey), nil)
 }
 
 func createNonce(w http.ResponseWriter, r *http.Request) {
@@ -104,9 +108,9 @@ func refreshAccessToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Logger.Info().Msgf("Generated new tokens for wallet %s: ", claims.WalletAddress)
-	log.Logger.Debug().Msgf("Refresh token expiration time: %s", claims.ExpiresAt.Time.Format(time.RFC3339))
+	log.Logger.Debug().Msgf("Refresh token expiration time: %s", claims.ExpiresAt.Format(time.RFC3339))
 	// set new refresh token as httpOnly cookie, only if it expires in 6 hours
-	if claims.ExpiresAt.Time.Before(time.Now().Add(6 * time.Hour)) {
+	if claims.ExpiresAt.Before(time.Now().Add(cookieExpirationPeriod * time.Hour)) {
 		log.Logger.Debug().Msg("Cookie expires less than 6 hours from now, generating new cookie")
 		//nolint:gosec // G124 ignoring gosec warning for cookie config
 		http.SetCookie(w, &http.Cookie{
@@ -120,7 +124,6 @@ func refreshAccessToken(w http.ResponseWriter, r *http.Request) {
 		})
 	} else {
 		log.Logger.Debug().Msg("Cookie expires more than 6 hours from now, using existing cookie")
-
 	}
 
 	accessTokenResponse := model.AccessTokenResponse{
@@ -158,7 +161,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionData := model.SessionData{
 		WalletAddress: walletAddress,
-		ChainId:       uint32(chainId),
+		ChainId:       int(chainId),
 	}
 	err = json.NewEncoder(w).Encode(sessionData)
 	if err != nil {
@@ -167,5 +170,4 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-
 }
