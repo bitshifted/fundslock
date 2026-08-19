@@ -41,7 +41,7 @@ func (s *jwtTestSuite) TestGenerateNonce() {
 }
 
 func (s *jwtTestSuite) TestGenerateTokensSuccess() {
-	pair, err := GenerateTokens("0xabc123")
+	pair, err := GenerateTokens("0xabc123", 100)
 	assert.NoError(s.T(), err)
 	assert.NotEmpty(s.T(), pair.AccessToken)
 	assert.NotEmpty(s.T(), pair.RefreshToken)
@@ -55,7 +55,7 @@ func (s *jwtTestSuite) TestGenerateTokensSuccess() {
 func (s *jwtTestSuite) TestGenerateTokensMissingSecret() {
 	// Clear secret key
 	model.AppConfig.JwtSecretKey = nil
-	_, err := GenerateTokens("0xabc123")
+	_, err := GenerateTokens("0xabc123", 100)
 	assert.Error(s.T(), err)
 	assert.EqualError(s.T(), err, "JWT secret key is not set in environment variables")
 }

@@ -19,5 +19,9 @@ type AccessTokenResponse struct {
 type SIWEVerificationRequest struct {
 	Message   string `json:"message"`
 	Signature string `json:"signature"`
-	Nonce     string `json:"nonce"`
+}
+
+type SessionData struct {
+	WalletAddress string `json:"address"`
+	ChainId       uint32 `json:"chainId"`
 }

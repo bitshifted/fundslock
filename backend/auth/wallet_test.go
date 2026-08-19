@@ -69,7 +69,6 @@ func (s *walletTestSuite) TestVerifyMessageHappyPath() {
 	addr, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   message,
 		Signature: signature,
-		Nonce:     nonce,
 	})
 	assert.NoError(s.T(), err)
 	assert.NotEmpty(s.T(), addr)
@@ -83,7 +82,6 @@ func (s *walletTestSuite) TestVerifyMessageInvalidMessage() {
 	_, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   "this is not a valid SIWE message at all",
 		Signature: "0xdeadbeef",
-		Nonce:     "valid-nonce",
 	})
 	assert.Error(s.T(), err)
 	_, exists := nonceStore["valid-nonce"]
@@ -99,7 +97,6 @@ func (s *walletTestSuite) TestVerifyMessageExpiredNonce() {
 	_, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   message,
 		Signature: "0xdeadbeef",
-		Nonce:     nonce,
 	})
 	assert.Error(s.T(), err)
 	assert.EqualError(s.T(), err, "invalid or expired nonce")
@@ -111,10 +108,9 @@ func (s *walletTestSuite) TestVerifyMessageMissingNonce() {
 	_, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   message,
 		Signature: "0xdeadbeef",
-		Nonce:     "nonexistentnonce",
 	})
 	assert.Error(s.T(), err)
-	assert.EqualError(s.T(), err, "invalid or expired nonce")
+	assert.EqualError(s.T(), err, "nonce not found")
 }
 
 func (s *walletTestSuite) TestVerifyMessageInvalidSignature() {
@@ -126,7 +122,6 @@ func (s *walletTestSuite) TestVerifyMessageInvalidSignature() {
 	_, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   message,
 		Signature: "0x" + strings.Repeat("0", 130),
-		Nonce:     nonce,
 	})
 	assert.Error(s.T(), err)
 }
@@ -145,7 +140,6 @@ func (s *walletTestSuite) TestVerifyMessageWrongWalletSignature() {
 	_, err = VerifyMessage(model.SIWEVerificationRequest{
 		Message:   message,
 		Signature: wrongSig,
-		Nonce:     nonce,
 	})
 	assert.Error(s.T(), err)
 }
@@ -168,7 +162,6 @@ func (s *walletTestSuite) TestVerifyMessageNonAlphanumericNonce() {
 	_, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   message,
 		Signature: "0xdeadbeef",
-		Nonce:     "has-hyphen-nonce",
 	})
 	assert.Error(s.T(), err)
 }
@@ -181,7 +174,6 @@ func (s *walletTestSuite) TestVerifyMessageNonceTooShort() {
 	_, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   message,
 		Signature: "0x" + strings.Repeat("1", 130),
-		Nonce:     "shortnonce",
 	})
 	assert.Error(s.T(), err)
 }
@@ -206,7 +198,6 @@ func (s *walletTestSuite) TestVerifyMessageTrailingWhitespaceInInitMessage() {
 	addr, err := VerifyMessage(model.SIWEVerificationRequest{
 		Message:   cleaned,
 		Signature: signature,
-		Nonce:     nonce,
 	})
 	assert.NoError(s.T(), err)
 	assert.NotEmpty(s.T(), addr)
