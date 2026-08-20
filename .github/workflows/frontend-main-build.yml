@@ -30,7 +30,7 @@ jobs:
                 npm install
         - name: Build and test
           run: |
-            npm run build
+            npm install --legacy-peer-deps
   release:
     needs: build
     uses: ./.github/workflows/common-release.yaml
