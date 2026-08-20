@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.0.1'
-          cache: 'npm'
       - name: Instal dependencies
         run: |
             npm install
