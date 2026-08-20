@@ -1,0 +1,37 @@
+name: Backend - Build and tag main branch
+
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
+            fetch-tags: true
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '24.0.1'
+        - name: Instal dependencies
+          run: |
+                npm install
+        - name: Build and test
+          run: |
+            npm install --legacy-peer-deps
+  release:
+    needs: build
+    uses: ./.github/workflows/common-release.yaml
+    with:
+      tag-prefix: 'fe-'

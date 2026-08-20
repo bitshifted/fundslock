@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 )
 
@@ -22,8 +23,10 @@ func Start() error {
 	router.Use(render.SetContentType(render.ContentTypeJSON))
 	// CORS config
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedOrigins:   []string{"http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 	}))
 	configLoader := model.NewConfigurationLoader()
@@ -33,6 +36,8 @@ func Start() error {
 		return err
 	}
 	agreementClient := newAgreementClient(model.AppConfig.GraphUrl, model.AppConfig.GraphApiKey)
+	// initialze JWT authentication middlwware
+	jwtInit()
 
 	router.Group(func(r chi.Router) {
 		r.Get("/api/v1/agreements", agreementClient.getAgreements)
@@ -43,6 +48,14 @@ func Start() error {
 		r.Get("/api/v1/auth/nonce", createNonce)
 		r.Post("/api/v1/auth/verify", verifySIWEMessage)
 		r.Get("/api/v1/auth/refresh", refreshAccessToken)
+	})
+
+	// JWT protected paths
+	router.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Authenticator)
+
+		r.Get("/api/v1/users/session", getSession)
 	})
 
 	server := http.Server{

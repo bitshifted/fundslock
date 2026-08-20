@@ -25,6 +25,7 @@ var (
 
 type Claims struct {
 	WalletAddress string `json:"wallet_address"`
+	ChainId       int    `json:"chain_id"`
 	jwt.RegisteredClaims
 }
 
@@ -46,13 +47,14 @@ func GenerateNonce() model.Nonce {
 	return nonce
 }
 
-func GenerateTokens(walletAddress string) (*model.TokenPair, error) {
+func GenerateTokens(walletAddress string, chainId int) (*model.TokenPair, error) {
 	if len(model.AppConfig.JwtSecretKey) == 0 {
 		return nil, errors.New("JWT secret key is not set in environment variables")
 	}
 	now := time.Now()
 	accessTokenClaims := &Claims{
 		WalletAddress: walletAddress,
+		ChainId:       chainId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(model.AppConfig.AccessTokenDuration) * time.Second)),
@@ -67,10 +69,14 @@ func GenerateTokens(walletAddress string) (*model.TokenPair, error) {
 	}
 
 	//  Refresh Token Claims
-	refreshClaims := jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(model.AppConfig.RefreshTokenDuration) * time.Second)),
-		IssuedAt:  jwt.NewNumericDate(now),
-		Subject:   walletAddress,
+	refreshClaims := &Claims{
+		WalletAddress: walletAddress,
+		ChainId:       chainId,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(model.AppConfig.RefreshTokenDuration) * time.Second)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			Subject:   walletAddress,
+		},
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
