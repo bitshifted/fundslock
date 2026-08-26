@@ -13,8 +13,8 @@ const appKitModal = createAppKit({
   networks: [mainnet, sepolia],
   projectId: PROJECT_ID,
   metadata: {
-    name: 'Go Web3 Test App',
-    description: 'Testing Go Auth with WalletConnect',
+    name: 'FundsLock',
+    description: 'FundsLock distributed escrow system',
     url: window.location.origin,
     icons: ['https://assets.reown.com/reown-profile-pic.png']
   },
