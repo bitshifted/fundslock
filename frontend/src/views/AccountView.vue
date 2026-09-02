@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AgreementCreator from '@/components/AgreementCreator.vue';
-import NavBar from '@/components/NavBar.vue';
+
 
 </script>
 

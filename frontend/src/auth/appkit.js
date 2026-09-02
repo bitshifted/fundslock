@@ -11,6 +11,7 @@ const PROJECT_ID = 'e103ded1feccd94ad1f759a8a13dce0f' // Replace with your Reown
 const appKitModal = createAppKit({
   adapters: [new EthersAdapter()],
   networks: [mainnet, sepolia],
+  defaultNetwork: sepolia,
   projectId: PROJECT_ID,
   metadata: {
     name: 'FundsLock',
