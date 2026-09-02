@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import NavBar from '@/components/NavBar.vue';
+import AgreementCreator from '@/components/AgreementCreator.vue';
+
 
 </script>
 
 <template>
     <div class="container">
-        <h1> Yout account</h1>
+        <h1> Your account</h1>
+        <AgreementCreator />
     </div>
 </template>

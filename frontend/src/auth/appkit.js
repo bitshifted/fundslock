@@ -11,10 +11,11 @@ const PROJECT_ID = 'e103ded1feccd94ad1f759a8a13dce0f' // Replace with your Reown
 const appKitModal = createAppKit({
   adapters: [new EthersAdapter()],
   networks: [mainnet, sepolia],
+  defaultNetwork: sepolia,
   projectId: PROJECT_ID,
   metadata: {
-    name: 'Go Web3 Test App',
-    description: 'Testing Go Auth with WalletConnect',
+    name: 'FundsLock',
+    description: 'FundsLock distributed escrow system',
     url: window.location.origin,
     icons: ['https://assets.reown.com/reown-profile-pic.png']
   },

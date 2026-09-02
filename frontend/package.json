@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode dev",
+    "build": "vite build --mode prod",
     "preview": "vite preview",
     "test:unit": "vitest",
     "lint": "run-s \"lint:*\"",
@@ -19,7 +19,6 @@
     "@reown/appkit-adapter-ethers": "^1.8.23",
     "@reown/appkit-siwe": "^1.8.23",
     "bootstrap": "^5.3.8",
-    "bootstrap-vue-next": "^0.45.10",
     "ethers": "^6.17.0",
     "pinia": "^4.0.3",
     "siwe": "^3.0.0",
