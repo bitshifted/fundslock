@@ -7,7 +7,10 @@ import (
 	"bitshifted/fundslock-be/graph"
 	"bitshifted/fundslock-be/log"
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/go-chi/jwtauth"
 )
 
 type agreementClient struct {
@@ -21,9 +24,12 @@ func newAgreementClient(endpoint, authToken string) *agreementClient {
 }
 
 func (ac *agreementClient) getAgreements(w http.ResponseWriter, r *http.Request) {
-	// hard coded address for development
-	log.Logger.Info().Msgf("Getting agreements for address %s", "0x0a1ea800875f81b6fd85943ac28426b34f42d464")
-	agreements, err := ac.client.QueryAgreementsForAddress("0x0a1ea800875f81b6fd85943ac28426b34f42d464")
+	// extract user wallet address from auth token
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	walletAddr := fmt.Sprintf("%v", claims["wallet_address"])
+
+	log.Logger.Debug().Msgf("Getting agreements for address %s", walletAddr)
+	agreements, err := ac.client.QueryAgreementsForAddress(walletAddr)
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("Failed to query agreement logs")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -39,8 +45,4 @@ func (ac *agreementClient) getAgreements(w http.ResponseWriter, r *http.Request)
 		}
 		return
 	}
-}
-
-func (ac *agreementClient) createAgreement(w http.ResponseWriter, r *http.Request) {
-
 }

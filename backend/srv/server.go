@@ -40,11 +40,6 @@ func Start() error {
 	jwtInit()
 
 	router.Group(func(r chi.Router) {
-		r.Get("/api/v1/agreements", agreementClient.getAgreements)
-		r.Post("/api/v1/agreements", agreementClient.createAgreement)
-	})
-
-	router.Group(func(r chi.Router) {
 		r.Get("/api/v1/auth/nonce", createNonce)
 		r.Post("/api/v1/auth/verify", verifySIWEMessage)
 		r.Get("/api/v1/auth/refresh", refreshAccessToken)
@@ -56,7 +51,9 @@ func Start() error {
 		r.Use(jwtauth.Authenticator)
 
 		r.Get("/api/v1/users/session", getSession)
+		r.Get("/api/v1/agreements", agreementClient.getAgreements)
 	})
+	agreementClient.client.QueryAgreementsForAddress("0x92c5fd33E29B31672Ba59D1109F8281d74fB838B")
 
 	server := http.Server{
 		Addr:         ":3000",

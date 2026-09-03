@@ -26,9 +26,13 @@ type AgreementLog struct {
 	Timestamp    string `json:"timestamp"`
 }
 
+type AgreementsQuery struct {
+	Loga AgreementLog `grapgql: "{agreementLogs(first: 5) { id agreement_id seller buyer } }"`
+}
+
 type AgreementLogsQuery struct {
 	//nolint:lll
-	AgreementLogs []AgreementLog `graphql:"agreementLogs(where: { or: [{ seller: $userAddress }, { buyer: $userAddress }] }, orderBy: timestamp, orderDirection: desc, first: $first, skip: $skip)"`
+	AgreementLogs []AgreementLog `graphql:"{agreementLogs(where: { or: [{ seller: $userAddress }, { buyer: $userAddress }] }, orderBy: timestamp, orderDirection: desc){id}}"`
 }
 
 type GraphqlClient interface {
@@ -41,15 +45,15 @@ type HasuraGraphqlClient struct {
 }
 
 func (g *HasuraGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]AgreementLog, error) {
-	var query AgreementLogsQuery
-	pageSize := 10
-	pageNumber := 0
+	var query AgreementsQuery
+	// pageSize := 10
+	// pageNumber := 0
 
 	// Construct the 'where' argument payload
 	variables := map[string]interface{}{
 		"userAddress": userAddress,
-		"first":       graphql.Int(pageSize),
-		"skip":        graphql.Int(pageNumber * pageSize),
+		// "first":       graphql.Int(pageSize),
+		// "skip":        graphql.Int(pageNumber * pageSize),
 	}
 	// Execute the query
 	err := g.client.Query(context.Background(), &query, variables)
@@ -57,6 +61,7 @@ func (g *HasuraGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]A
 		log.Logger.Error().Err(err).Msg("Failed to query agreement logs")
 		return nil, err
 	}
+	log.Logger.Debug().Msgf("Graph response: %v", query.AgreementLogs)
 
 	return query.AgreementLogs, nil
 }
