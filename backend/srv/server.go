@@ -53,7 +53,8 @@ func Start() error {
 		r.Get("/api/v1/users/session", getSession)
 		r.Get("/api/v1/agreements", agreementClient.getAgreements)
 	})
-	agreementClient.client.QueryAgreementsForAddress("0x92c5fd33E29B31672Ba59D1109F8281d74fB838B")
+	// res, _ := agreementClient.client.QueryAgreementsForAddress("0x92c5fd33E29B31672Ba59D1109F8281d74fB838B")
+	// log.Logger.Info().Msgf("result: %v", res)
 
 	server := http.Server{
 		Addr:         ":3000",

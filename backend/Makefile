@@ -15,7 +15,7 @@ clean:
 	rm -rvf ${TARGET_DIR}
 
 lint:
-	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
 	$(GOPATH)/bin/golangci-lint run ./...
 	go mod tidy
 

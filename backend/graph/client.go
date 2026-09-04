@@ -5,17 +5,39 @@ package graph
 
 import (
 	"bitshifted/fundslock-be/log"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-
-	"github.com/hasura/go-graphql-client"
+	"time"
 )
 
-type AgreementLogFilter struct {
-	Seller string `json:"seller,omitempty"`
-	Buyer  string `json:"buyer,omitempty"`
+const (
+	agreementsQuery = `
+query GetAgreementLogs($userAddr: String!){
+ agreementLogs(
+    where: {
+      or: [
+        { seller: $userAddr, },
+        { buyer: $userAddr, }
+      ]
+    }
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    id
+    agreement_id
+    seller
+    buyer
+    amount
+    status
+    timestamp
+  }
 }
+`
+)
 
 type AgreementLog struct {
 	Agreement_id string `json:"agreement_id"`
@@ -26,51 +48,93 @@ type AgreementLog struct {
 	Timestamp    string `json:"timestamp"`
 }
 
-type AgreementsQuery struct {
-	Loga AgreementLog `grapgql: "{agreementLogs(first: 5) { id agreement_id seller buyer } }"`
+type AgreementsLogResponse struct {
+	Data *LogsResponseData `json:"data"`
 }
 
-type AgreementLogsQuery struct {
-	//nolint:lll
-	AgreementLogs []AgreementLog `graphql:"{agreementLogs(where: { or: [{ seller: $userAddress }, { buyer: $userAddress }] }, orderBy: timestamp, orderDirection: desc){id}}"`
+type LogsResponseData struct {
+	AgreementLogs []AgreementLog `json:"agreementLogs"`
+}
+
+type QueryPayload struct {
+	Query     string                 `json:"query"`
+	Operation string                 `json:"operationName,omitempty"`
+	Vars      map[string]interface{} `json:"variables,omitempty"`
 }
 
 type GraphqlClient interface {
-	QueryAgreementsForAddress(string) ([]AgreementLog, error)
+	QueryAgreementsForAddress(string) (map[string][]AgreementLog, error)
 }
 
-type HasuraGraphqlClient struct {
+type HttpGraphqlClient struct {
 	GraphqlClient
-	client *graphql.Client
+	Endpoint  string
+	AuthToken string
+	Client    *http.Client
 }
 
-func (g *HasuraGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]AgreementLog, error) {
-	var query AgreementsQuery
-	// pageSize := 10
-	// pageNumber := 0
-
-	// Construct the 'where' argument payload
-	variables := map[string]interface{}{
-		"userAddress": userAddress,
-		// "first":       graphql.Int(pageSize),
-		// "skip":        graphql.Int(pageNumber * pageSize),
+func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string) (map[string][]AgreementLog, error) {
+	log.Logger.Debug().Msg("Running agreements query")
+	query := QueryPayload{
+		Query:     agreementsQuery,
+		Operation: "Subgraphs",
+		Vars: map[string]interface{}{
+			"userAddr": userAddress,
+		},
 	}
-	// Execute the query
-	err := g.client.Query(context.Background(), &query, variables)
+	data, err := json.Marshal(query)
 	if err != nil {
-		log.Logger.Error().Err(err).Msg("Failed to query agreement logs")
+		log.Logger.Error().Msgf("Failed to marshal query string: %s", err)
 		return nil, err
 	}
-	log.Logger.Debug().Msgf("Graph response: %v", query.AgreementLogs)
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodPost, c.Endpoint, bytes.NewReader(data))
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to create graphQL request: %v", err)
+		return nil, err
+	}
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.AuthToken))
+	request.Header.Set("Content-Type", "application/json")
+	resp, err := c.Client.Do(request)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to get graphql response: %v", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-	return query.AgreementLogs, nil
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to read response body: %v", err)
+		return nil, err
+	}
+	log.Logger.Debug().Msgf("response body: %s", string(body))
+	var result AgreementsLogResponse
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to unmarshal response body: %v", err)
+		return nil, err
+	}
+	return convertResultToMap(result.Data.AgreementLogs), nil
 }
 
 func NewGraphqlClient(endpoint, authToken string) GraphqlClient {
-	client := graphql.NewClient(endpoint, http.DefaultClient).WithRequestModifier(func(r *http.Request) {
-		r.Header.Set("Authorization", fmt.Sprintf("%s %s", "Bearer", authToken))
-	})
-	return &HasuraGraphqlClient{
-		client: client,
+	return &HttpGraphqlClient{
+		Endpoint:  endpoint,
+		AuthToken: authToken,
+		Client: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
+}
+
+func convertResultToMap(logs []AgreementLog) map[string][]AgreementLog {
+	out := make(map[string][]AgreementLog, 0)
+	for _, l := range logs {
+		lst, ok := out[l.Agreement_id]
+		if ok {
+			out[l.Agreement_id] = append(lst, l)
+		} else {
+			out[l.Agreement_id] = []AgreementLog{l}
+		}
+	}
+	return out
 }
