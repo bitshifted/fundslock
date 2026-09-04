@@ -24,20 +24,23 @@ func Test_GetAgreementsSuccess(t *testing.T) {
 		client: mockClient,
 	}
 
-	agLog := map[string][]graph.AgreementLog{
-		"123": {
-			graph.AgreementLog{
-				Agreement_id: "123",
-				Seller:       "0x1231231323344",
-				Buyer:        "0x3453453453453",
-				Amount:       "1000",
-				Status:       1,
-				Timestamp:    "123455667",
+	items := []graph.AgreementResponseItem{
+		{
+			AgreementId: 123,
+			Seller:      "0x1231231323344",
+			Buyer:       "0x3453453453453",
+			Amount:      1.2,
+			Status:      1,
+			StatusChanges: []graph.AgreementStatusChange{
+				{
+					Status:    1,
+					Timestamp: "2023-01-01T12:00:00Z",
+				},
 			},
 		},
 	}
 
-	mockClient.EXPECT().QueryAgreementsForAddress(gomock.Any()).Return(agLog, nil)
+	mockClient.EXPECT().QueryAgreementsForAddress(gomock.Any()).Return(items, nil)
 	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/v1/agreements", nil)
 	rec := httptest.NewRecorder()
 
@@ -47,8 +50,8 @@ func Test_GetAgreementsSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	body, _ := io.ReadAll(res.Body)
-	assert.Equal(t, "{\"123\":[{\"agreement_id\":\"123\",\"seller\":\"0x1231231323344\",\"buyer\":"+
-		"\"0x3453453453453\",\"amount\":\"1000\",\"status\":1,\"timestamp\":\"123455667\"}]}\n", string(body))
+	assert.Equal(t, "[{\"agreementId\":123,\"seller\":\"0x1231231323344\",\"buyer\":\"0x3453453453453\""+
+		",\"amount\":1.2,\"status\":1,\"statusChanges\":[{\"status\":1,\"timestamp\":\"2023-01-01T12:00:00Z\"}]}]\n", string(body))
 }
 
 func Test_GetAgreementsQueryError(t *testing.T) {

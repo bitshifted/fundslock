@@ -11,10 +11,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 const (
+	weiMultiplier   = 1e-18
 	agreementsQuery = `
 query GetAgreementLogs($userAddr: String!){
  agreementLogs(
@@ -62,8 +64,22 @@ type QueryPayload struct {
 	Vars      map[string]interface{} `json:"variables,omitempty"`
 }
 
+type AgreementStatusChange struct {
+	Status    int    `json:"status"`
+	Timestamp string `json:"timestamp"`
+}
+
+type AgreementResponseItem struct {
+	AgreementId   int                     `json:"agreementId"`
+	Seller        string                  `json:"seller"`
+	Buyer         string                  `json:"buyer"`
+	Amount        float64                 `json:"amount"`
+	Status        int                     `json:"status"`
+	StatusChanges []AgreementStatusChange `json:"statusChanges"`
+}
+
 type GraphqlClient interface {
-	QueryAgreementsForAddress(string) (map[string][]AgreementLog, error)
+	QueryAgreementsForAddress(string) ([]AgreementResponseItem, error)
 }
 
 type HttpGraphqlClient struct {
@@ -73,7 +89,7 @@ type HttpGraphqlClient struct {
 	Client    *http.Client
 }
 
-func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string) (map[string][]AgreementLog, error) {
+func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]AgreementResponseItem, error) {
 	log.Logger.Debug().Msg("Running agreements query")
 	query := QueryPayload{
 		Query:     agreementsQuery,
@@ -113,7 +129,7 @@ func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string) (map[s
 		log.Logger.Error().Msgf("Failed to unmarshal response body: %v", err)
 		return nil, err
 	}
-	return convertResultToMap(result.Data.AgreementLogs), nil
+	return convertToResultResponse(result.Data.AgreementLogs)
 }
 
 func NewGraphqlClient(endpoint, authToken string) GraphqlClient {
@@ -126,15 +142,58 @@ func NewGraphqlClient(endpoint, authToken string) GraphqlClient {
 	}
 }
 
-func convertResultToMap(logs []AgreementLog) map[string][]AgreementLog {
+func convertToResultResponse(logs []AgreementLog) ([]AgreementResponseItem, error) {
 	out := make(map[string][]AgreementLog, 0)
+	keys := make([]string, 0)
 	for _, l := range logs {
 		lst, ok := out[l.Agreement_id]
 		if ok {
 			out[l.Agreement_id] = append(lst, l)
 		} else {
 			out[l.Agreement_id] = []AgreementLog{l}
+			keys = append(keys, l.Agreement_id)
 		}
 	}
-	return out
+	res := make([]AgreementResponseItem, 0)
+	for _, k := range keys {
+		id, err := strconv.Atoi(k)
+		if err != nil {
+			log.Logger.Error().Msgf("Failed to parse agreement id: %v", err)
+			return nil, err
+		}
+		lst := out[k]
+
+		amount, err := strconv.Atoi(lst[len(lst)-1].Amount)
+		if err != nil {
+			log.Logger.Error().Msgf("Failed to parse amount: %v", err)
+			return nil, err
+		}
+		calcAmount := float64(amount) * weiMultiplier
+		statusChanges := make([]AgreementStatusChange, 0)
+		for _, l := range lst {
+			statusChanges = append(statusChanges, AgreementStatusChange{
+				Status:    l.Status,
+				Timestamp: formatTimestampString(l.Timestamp),
+			})
+		}
+		res = append(res, AgreementResponseItem{
+			AgreementId:   id,
+			Seller:        lst[0].Seller,
+			Buyer:         lst[0].Buyer,
+			Amount:        calcAmount,
+			Status:        lst[0].Status,
+			StatusChanges: statusChanges,
+		})
+	}
+	return res, nil
+}
+
+func formatTimestampString(timestamp string) string {
+	timestampInt, err := strconv.Atoi(timestamp)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to parse timestamp: %v", err)
+		return timestamp
+	}
+	timestampTime := time.Unix(int64(timestampInt), 0)
+	return timestampTime.Format("2006-01-02 15:04:05")
 }
