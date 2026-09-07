@@ -5,17 +5,41 @@ package graph
 
 import (
 	"bitshifted/fundslock-be/log"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-
-	"github.com/hasura/go-graphql-client"
+	"strconv"
+	"time"
 )
 
-type AgreementLogFilter struct {
-	Seller string `json:"seller,omitempty"`
-	Buyer  string `json:"buyer,omitempty"`
+const (
+	weiMultiplier   = 1e-18
+	agreementsQuery = `
+query GetAgreementLogs($userAddr: String!){
+ agreementLogs(
+    where: {
+      or: [
+        { seller: $userAddr, },
+        { buyer: $userAddr, }
+      ]
+    }
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    id
+    agreement_id
+    seller
+    buyer
+    amount
+    status
+    timestamp
+  }
 }
+`
+)
 
 type AgreementLog struct {
 	Agreement_id string `json:"agreement_id"`
@@ -26,46 +50,150 @@ type AgreementLog struct {
 	Timestamp    string `json:"timestamp"`
 }
 
-type AgreementLogsQuery struct {
-	//nolint:lll
-	AgreementLogs []AgreementLog `graphql:"agreementLogs(where: { or: [{ seller: $userAddress }, { buyer: $userAddress }] }, orderBy: timestamp, orderDirection: desc, first: $first, skip: $skip)"`
+type AgreementsLogResponse struct {
+	Data *LogsResponseData `json:"data"`
+}
+
+type LogsResponseData struct {
+	AgreementLogs []AgreementLog `json:"agreementLogs"`
+}
+
+type QueryPayload struct {
+	Query     string                 `json:"query"`
+	Operation string                 `json:"operationName,omitempty"`
+	Vars      map[string]interface{} `json:"variables,omitempty"`
+}
+
+type AgreementStatusChange struct {
+	Status    int    `json:"status"`
+	Timestamp string `json:"timestamp"`
+}
+
+type AgreementResponseItem struct {
+	AgreementId   int                     `json:"agreementId"`
+	Seller        string                  `json:"seller"`
+	Buyer         string                  `json:"buyer"`
+	Amount        float64                 `json:"amount"`
+	Status        int                     `json:"status"`
+	StatusChanges []AgreementStatusChange `json:"statusChanges"`
 }
 
 type GraphqlClient interface {
-	QueryAgreementsForAddress(string) ([]AgreementLog, error)
+	QueryAgreementsForAddress(string) ([]AgreementResponseItem, error)
 }
 
-type HasuraGraphqlClient struct {
+type HttpGraphqlClient struct {
 	GraphqlClient
-	client *graphql.Client
+	Endpoint  string
+	AuthToken string
+	Client    *http.Client
 }
 
-func (g *HasuraGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]AgreementLog, error) {
-	var query AgreementLogsQuery
-	pageSize := 10
-	pageNumber := 0
-
-	// Construct the 'where' argument payload
-	variables := map[string]interface{}{
-		"userAddress": userAddress,
-		"first":       graphql.Int(pageSize),
-		"skip":        graphql.Int(pageNumber * pageSize),
+func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]AgreementResponseItem, error) {
+	log.Logger.Debug().Msg("Running agreements query")
+	query := QueryPayload{
+		Query:     agreementsQuery,
+		Operation: "Subgraphs",
+		Vars: map[string]interface{}{
+			"userAddr": userAddress,
+		},
 	}
-	// Execute the query
-	err := g.client.Query(context.Background(), &query, variables)
+	data, err := json.Marshal(query)
 	if err != nil {
-		log.Logger.Error().Err(err).Msg("Failed to query agreement logs")
+		log.Logger.Error().Msgf("Failed to marshal query string: %s", err)
 		return nil, err
 	}
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodPost, c.Endpoint, bytes.NewReader(data))
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to create graphQL request: %v", err)
+		return nil, err
+	}
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.AuthToken))
+	request.Header.Set("Content-Type", "application/json")
+	resp, err := c.Client.Do(request)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to get graphql response: %v", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-	return query.AgreementLogs, nil
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to read response body: %v", err)
+		return nil, err
+	}
+	log.Logger.Debug().Msgf("response body: %s", string(body))
+	var result AgreementsLogResponse
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to unmarshal response body: %v", err)
+		return nil, err
+	}
+	return convertToResultResponse(result.Data.AgreementLogs)
 }
 
 func NewGraphqlClient(endpoint, authToken string) GraphqlClient {
-	client := graphql.NewClient(endpoint, http.DefaultClient).WithRequestModifier(func(r *http.Request) {
-		r.Header.Set("Authorization", fmt.Sprintf("%s %s", "Bearer", authToken))
-	})
-	return &HasuraGraphqlClient{
-		client: client,
+	return &HttpGraphqlClient{
+		Endpoint:  endpoint,
+		AuthToken: authToken,
+		Client: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
+}
+
+func convertToResultResponse(logs []AgreementLog) ([]AgreementResponseItem, error) {
+	out := make(map[string][]AgreementLog, 0)
+	keys := make([]string, 0)
+	for _, l := range logs {
+		lst, ok := out[l.Agreement_id]
+		if ok {
+			out[l.Agreement_id] = append(lst, l)
+		} else {
+			out[l.Agreement_id] = []AgreementLog{l}
+			keys = append(keys, l.Agreement_id)
+		}
+	}
+	res := make([]AgreementResponseItem, 0)
+	for _, k := range keys {
+		id, err := strconv.Atoi(k)
+		if err != nil {
+			log.Logger.Error().Msgf("Failed to parse agreement id: %v", err)
+			return nil, err
+		}
+		lst := out[k]
+
+		amount, err := strconv.Atoi(lst[len(lst)-1].Amount)
+		if err != nil {
+			log.Logger.Error().Msgf("Failed to parse amount: %v", err)
+			return nil, err
+		}
+		calcAmount := float64(amount) * weiMultiplier
+		statusChanges := make([]AgreementStatusChange, 0)
+		for _, l := range lst {
+			statusChanges = append(statusChanges, AgreementStatusChange{
+				Status:    l.Status,
+				Timestamp: formatTimestampString(l.Timestamp),
+			})
+		}
+		res = append(res, AgreementResponseItem{
+			AgreementId:   id,
+			Seller:        lst[0].Seller,
+			Buyer:         lst[0].Buyer,
+			Amount:        calcAmount,
+			Status:        lst[0].Status,
+			StatusChanges: statusChanges,
+		})
+	}
+	return res, nil
+}
+
+func formatTimestampString(timestamp string) string {
+	timestampInt, err := strconv.Atoi(timestamp)
+	if err != nil {
+		log.Logger.Error().Msgf("Failed to parse timestamp: %v", err)
+		return timestamp
+	}
+	timestampTime := time.Unix(int64(timestampInt), 0)
+	return timestampTime.Format("2006-01-02 15:04:05")
 }
