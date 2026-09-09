@@ -3,8 +3,12 @@ import { useAuthStore } from '@/stores/auth.js';
 import { onMounted, ref } from 'vue';
 import { BACKEND_URL } from '@/config/common.js'
 import {statusMap} from '@/assets/abi/enums.js'
+import { useAppKitAccount } from '@reown/appkit/vue';
 
 const AGREEMENTS_URL = `${BACKEND_URL}/api/v1/agreements`
+
+const eip155Account = useAppKitAccount({ namespace: "eip155" }); 
+
 
 const authStore = useAuthStore()
 const agreementsList = ref([])
@@ -17,6 +21,8 @@ async function fetchAgreements() {
         }
     })
     agreementsList.value = await response.json()
+    const curAddress = eip155Account.value.address
+    console.log(`current address: ${curAddress}`)
 }
 
 function statusLabelColor(status) {
