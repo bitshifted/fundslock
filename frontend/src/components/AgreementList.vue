@@ -3,10 +3,10 @@ import contractAbi from '@/assets/abi/FundsLock.json'
 import { useAuthStore } from '@/stores/auth.js';
 import { onMounted, ref } from 'vue';
 import { BACKEND_URL,CONTRACT_ADDRESS } from '@/config/common.js'
-import {statusMap} from '@/assets/abi/enums.js'
+import {STATUS_FUNDED, STATUS_RELEASED, STATUS_SELLER_ACCEPTED, statusMap} from '@/assets/abi/enums.js'
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/vue';
 import { switchToSepolia } from '@/eth/index.js'
-import { BrowserProvider } from 'ethers';
+import { BrowserProvider, parseEther } from 'ethers';
 import { Contract } from 'ethers';
 
 const AGREEMENTS_URL = `${BACKEND_URL}/api/v1/agreements`
@@ -59,11 +59,11 @@ function isBuyer(agreement) {
 }
 
 function isAgreementAccepted(agreement) {
-    return agreement.statusChanges.some(statusChange => statusChange.status === 2) // Check if status 2 (Accepted) exists in statusChanges
+    return agreement.statusChanges.some(statusChange => statusChange.status === STATUS_SELLER_ACCEPTED) // Check if status 2 (Accepted) exists in statusChanges
 }
 
 function canBeFunded(agreement) {
-    return !agreement.statusChanges.some(statusChange => statusChange.status === 5 || statusChange.status === 6) // Check if status 5 (Funded) or 6 (Canceled) exists in statusChanges
+    return !agreement.statusChanges.some(statusChange => statusChange.status === STATUS_FUNDED || statusChange.status === STATUS_RELEASED) // Check if status 1 (Funded) or 5 (Released) exists in statusChanges
 }
 
 const acceptAgreement = async (agreementId) => {
@@ -77,8 +77,28 @@ const acceptAgreement = async (agreementId) => {
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
     const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
-    const address = await signer.getAddress()
+    
     const tx = await contract.sellerAcceptAgreement(agreementId)
+    console.log("tansaction: " + tx)
+  } catch(err) {
+    console.log(err)
+  }
+}
+
+const fundAgreement = async (agreementId, amount) => {
+     const ethereum = appKitProvider?.walletProvider
+  if (!ethereum) {
+    alert('Please connect your wallet first')
+    return
+  }
+  try {
+    await switchToSepolia(ethereum)
+    const provider = new BrowserProvider(ethereum)
+    const signer = await provider.getSigner()
+    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const val = parseEther(String(amount))
+    console.log(`Funding agreement with id: ${agreementId} and amount: ${amount}`)
+    const tx = await contract.fundAgreement(agreementId, { value: val })
     console.log("tansaction: " + tx)
   } catch(err) {
     console.log(err)
@@ -107,7 +127,7 @@ onMounted(() => {
                 <p>Amount: {{ agreement.amount }}</p>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && !isAgreementAccepted(agreement)" @click="acceptAgreement(agreement.agreementId)">Accept agreement</button>
-                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && canBeFunded(agreement)" @click="acceptAgreement(agreement.agreementId)">Fund agreement</button>
+                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && canBeFunded(agreement)" @click="fundAgreement(agreement.agreementId, agreement.amount)">Fund agreement</button>
                 </div>
                 <ul>
                     <li v-for="statusChange in agreement.statusChanges" :key="statusChange.timestamp">
