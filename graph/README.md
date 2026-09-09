@@ -26,5 +26,13 @@ Deployment is done autmomatically via Github Action. The process is the followin
 3. create a branch and push changes to Github. This will force buinding and testing your subgraph.
 4. Once all tests pass, merge the pull request. This will trigger Github workflow to deploy the subgraph
 
+# Troubleshooting
 
+In test/dev environemnt, if graph is not queried for a prolonged time, it may be purged. The solution is to force a dummy commit into this directory, triggering a fresh release to dev/test environment.
+
+One symptom of this happening is if you get this kind of response when querying graph:
+
+```
+{"errors":[{"message":"deployment `u1756772/s120401/latest` does not exist"}]}
+```
 
