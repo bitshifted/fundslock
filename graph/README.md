@@ -30,3 +30,9 @@ Deployment is done autmomatically via Github Action. The process is the followin
 
 In test/dev environemnt, if graph is not queried for a prolonged time, it may be purged. The solution is to force a dummy commit into this directory, triggering a fresh release to dev/test environment.
 
+One symptom of this happening is if you get this kind of response when querying graph:
+
+```
+{"errors":[{"message":"deployment `u1756772/s120401/latest` does not exist"}]}
+```
+
