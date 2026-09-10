@@ -1,5 +1,5 @@
 
-const statusMap = new Map([
+export const statusMap = new Map([
   [0, 'CREATED'],
   [1, 'FUNDED'],
   [2, 'SELLER_ACCEPTED'],
@@ -9,4 +9,12 @@ const statusMap = new Map([
   [6, 'CANCELED'],
 ]);
 
-export { statusMap };
+export const STATUS_CREATED = 0;
+export const STATUS_FUNDED = 1;
+export const STATUS_SELLER_ACCEPTED = 2;
+export const STATUS_SELLER_REQUESTED_RELEASE = 3;
+export const STATUS_BUYER_APPROVED_RELEASE = 4;
+export const STATUS_RELEASED = 5;
+export const STATUS_CANCELED = 6;
+
+// export { statusMap, STATUS_CREATED, STATUS_FUNDED, STATUS_SELLER_ACCEPTED, STATUS_SELLER_REQUESTED_RELEASE, STATUS_BUYER_APPROVED_RELEASE, STATUS_RELEASED, STATUS_CANCELED };

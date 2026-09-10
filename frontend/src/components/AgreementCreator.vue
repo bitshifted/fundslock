@@ -17,6 +17,8 @@ function getAbi() {
 const counterparty = ref('')
 const amount = ref(0)
 const currency = ref('ETH')
+const network = ref('sepolia')
+const side = ref('buyer')
 
 async function switchToSepolia(ethereum) {
   if (!ethereum) return
@@ -46,7 +48,11 @@ const  createAgreement = async () => {
     const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
     const address = await signer.getAddress()
     const calcAmount = amount.value * 1000000000000000000
-    const tx = await contract.createAgreement(address, counterparty.value, calcAmount)
+    const buyerAddress = side.value === 'buyer' ? address : counterparty.value
+    const sellerAddress = side.value === 'seller' ? address : counterparty.value
+
+    console.log(`Creating agreement with address: ${address}, counterparty: ${counterparty.value}, amount: ${calcAmount}`)
+    const tx = await contract.createAgreement(sellerAddress, buyerAddress, calcAmount)
     console.log("tansaction: " + tx)
   } catch(err) {
     console.log(err)
@@ -63,16 +69,16 @@ const  createAgreement = async () => {
   <div class="form-group row mb-3">
     <label for="side" class="col-sm-2 col-form-label">Side: </label>
     <div class="col-sm-1">
-      <select id="side" class="form-control">
-        <option>Buyer</option>
-        <option>Seller</option>
+      <select id="side" class="form-control" v-model="side">
+        <option value="buyer">Buyer</option>
+        <option value="seller">Seller</option>
       </select>
     </div>
     <label for="side" class="col-sm-2 col-form-label">Network: </label>
     <div class="col-sm-1">
-      <select id="side" class="form-control">
-        <option>Ethereum</option>
-        <option>Sepolia</option>
+      <select id="network" class="form-control" v-model="network">
+        <option value="ethereum">Ethereum</option>
+        <option value="sepolia">Sepolia</option>
       </select>
     </div>
   </div>

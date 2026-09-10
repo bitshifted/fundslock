@@ -1,13 +1,30 @@
 <script setup>
+import contractAbi from '@/assets/abi/FundsLock.json'
 import { useAuthStore } from '@/stores/auth.js';
 import { onMounted, ref } from 'vue';
-import { BACKEND_URL } from '@/config/common.js'
-import {statusMap} from '@/assets/abi/enums.js'
+import { BACKEND_URL,CONTRACT_ADDRESS } from '@/config/common.js'
+import {STATUS_FUNDED, STATUS_RELEASED, STATUS_SELLER_ACCEPTED, STATUS_SELLER_REQUESTED_RELEASE, statusMap} from '@/assets/abi/enums.js'
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/vue';
+import { switchToSepolia } from '@/eth/index.js'
+import { BrowserProvider, parseEther } from 'ethers';
+import { Contract } from 'ethers';
 
 const AGREEMENTS_URL = `${BACKEND_URL}/api/v1/agreements`
 
+const eip155Account = useAppKitAccount({ namespace: "eip155" }); 
+const appKitProvider = useAppKitProvider('eip155')
+
+function getAbi() {
+    return contractAbi.abi ? contractAbi.abi  : contractAbi
+}
+
 const authStore = useAuthStore()
 const agreementsList = ref([])
+const opRunning = ref([])
+
+const isSpinnerVisible = (agreementId) => {
+    return opRunning.value.includes(agreementId)
+}
 
 async function fetchAgreements() {
     console.log(`auth token: ${authStore.token}`)
@@ -17,6 +34,8 @@ async function fetchAgreements() {
         }
     })
     agreementsList.value = await response.json()
+    const curAddress = eip155Account.value.address
+    console.log(`current address: ${curAddress}`)
 }
 
 function statusLabelColor(status) {
@@ -32,6 +51,111 @@ function statusLabelColor(status) {
         default:
             return 'badge text-bg-light'
     }
+}
+
+function isSeller(agreement) {
+    const curAddress = eip155Account.value.address
+    return agreement.seller.toLowerCase() === curAddress.toLowerCase()
+}
+
+function isBuyer(agreement) {
+    const curAddress = eip155Account.value.address
+    return agreement.buyer.toLowerCase() === curAddress.toLowerCase()
+}
+
+function isAgreementAccepted(agreement) {
+    return agreement.statusChanges.some(statusChange => statusChange.status === STATUS_SELLER_ACCEPTED) // Check if status 2 (Accepted) exists in statusChanges
+}
+
+function canBeFunded(agreement) {
+    return !agreement.statusChanges.some(statusChange => statusChange.status === STATUS_FUNDED || statusChange.status === STATUS_RELEASED) // Check if status 1 (Funded) or 5 (Released) exists in statusChanges
+}
+
+function canRequestRelease(agreement) {
+    return !agreement.statusChanges.some(statusChange => statusChange.status === STATUS_RELEASED || statusChange.status === STATUS_SELLER_REQUESTED_RELEASE) // Check if status 5 (Released) or 1 (Funded) exists in statusChanges
+}
+
+function isReleaseRequested(agreement) {
+    return agreement.statusChanges.some(statusChange => statusChange.status === STATUS_SELLER_REQUESTED_RELEASE) && !agreement.statusChanges.some(statusChange => statusChange.status === STATUS_RELEASED) // Check if status 1 (Funded) or 5 (Released) exists in statusChanges
+}
+
+const acceptAgreement = async (agreementId) => {
+     const ethereum = appKitProvider?.walletProvider
+  if (!ethereum) {
+    alert('Please connect your wallet first')
+    return
+  }
+  try {
+    await switchToSepolia(ethereum)
+    const provider = new BrowserProvider(ethereum)
+    const signer = await provider.getSigner()
+    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    
+    const tx = await contract.sellerAcceptAgreement(agreementId)
+    console.log("tansaction: " + tx)
+  } catch(err) {
+    console.log(err)
+  }
+}
+
+const fundAgreement = async (agreementId, amount) => {
+     const ethereum = appKitProvider?.walletProvider
+  if (!ethereum) {
+    alert('Please connect your wallet first')
+    return
+  }
+  try {
+    await switchToSepolia(ethereum)
+    const provider = new BrowserProvider(ethereum)
+    const signer = await provider.getSigner()
+    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const val = parseEther(String(amount))
+    console.log(`Funding agreement with id: ${agreementId} and amount: ${amount}`)
+    const tx = await contract.fundAgreement(agreementId, { value: val })
+    console.log("tansaction: " + tx)
+  } catch(err) {
+    console.log(err)
+  }
+}
+
+const requestRelease = async (agreementId) => {
+    opRunning.value.push(agreementId) // Show spinner for this agreement
+     const ethereum = appKitProvider?.walletProvider
+  if (!ethereum) {
+    alert('Please connect your wallet first')
+    return
+  }
+  try {
+    await switchToSepolia(ethereum)
+    const provider = new BrowserProvider(ethereum)
+    const signer = await provider.getSigner()
+    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    
+    const tx = await contract.requestRelease(agreementId)
+    console.log("tansaction: " + tx)
+  } catch(err) {
+    console.log(err)
+  }
+  opRunning.value = opRunning.value.filter(id => id !== agreementId) // Hide spinner for this agreement
+}
+
+const releaseFunds = async (agreementId) => {
+     const ethereum = appKitProvider?.walletProvider
+  if (!ethereum) {
+    alert('Please connect your wallet first')
+    return
+  }
+  try {
+    await switchToSepolia(ethereum)
+    const provider = new BrowserProvider(ethereum)
+    const signer = await provider.getSigner()
+    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    
+    const tx = await contract.releaseFunds(agreementId)
+    console.log("tansaction: " + tx)
+  } catch(err) {
+    console.log(err)
+  }
 }
 
 onMounted(() => {
@@ -54,6 +178,15 @@ onMounted(() => {
                 <p>Seller: {{ agreement.seller }}</p>
                 <p>Buyer: {{ agreement.buyer }}</p>
                 <p>Amount: {{ agreement.amount }}</p>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && !isAgreementAccepted(agreement)" @click="acceptAgreement(agreement.agreementId)">Accept agreement</button>
+                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && canBeFunded(agreement)" @click="fundAgreement(agreement.agreementId, agreement.amount)">Fund agreement</button>
+                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && canRequestRelease(agreement)" @click="requestRelease(agreement.agreementId)">Request Release</button>
+                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && isReleaseRequested(agreement)" @click="releaseFunds(agreement.agreementId)">Release funds</button>
+                    <div class="spinner-border" role="status" v-if="isSpinnerVisible(agreement.agreementId)">
+                    <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
                 <ul>
                     <li v-for="statusChange in agreement.statusChanges" :key="statusChange.timestamp">
                         time: {{ statusChange.timestamp }} status: <span :class="statusLabelColor(statusChange.status)">{{ statusMap.get(statusChange.status) }}</span>
