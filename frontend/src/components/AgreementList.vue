@@ -1,7 +1,7 @@
 <script setup>
 import contractAbi from '@/assets/abi/FundsLock.json'
 import { useAuthStore } from '@/stores/auth.js';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref,computed } from 'vue';
 import { BACKEND_URL,CONTRACT_ADDRESS } from '@/config/common.js'
 import {STATUS_FUNDED, STATUS_RELEASED, STATUS_SELLER_ACCEPTED, STATUS_SELLER_REQUESTED_RELEASE, statusMap} from '@/assets/abi/enums.js'
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/vue';
@@ -21,9 +21,19 @@ function getAbi() {
 const authStore = useAuthStore()
 const agreementsList = ref([])
 const opRunning = ref([])
+const opSuccess = ref([])
 
-const isSpinnerVisible = (agreementId) => {
+
+const isOpRunning = (agreementId) => {
     return opRunning.value.includes(agreementId)
+}
+
+const showSuccessAlert = (agreementId) => {
+    return opSuccess.value.includes(agreementId)
+}
+
+const resetSuccess = (agreementId) => {
+    opSuccess.value = opSuccess.value.filter(id => id !== agreementId)
 }
 
 async function fetchAgreements() {
@@ -80,6 +90,7 @@ function isReleaseRequested(agreement) {
 }
 
 const acceptAgreement = async (agreementId) => {
+    opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
     alert('Please connect your wallet first')
@@ -96,9 +107,11 @@ const acceptAgreement = async (agreementId) => {
   } catch(err) {
     console.log(err)
   }
+  opRunning.value = opRunning.value.filter(id => id !== agreementId)
 }
 
 const fundAgreement = async (agreementId, amount) => {
+    opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
     alert('Please connect your wallet first')
@@ -109,17 +122,18 @@ const fundAgreement = async (agreementId, amount) => {
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
     const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
-    const val = parseEther(String(amount))
+    const val = parseEther(String(amount).substring(0, 18))
     console.log(`Funding agreement with id: ${agreementId} and amount: ${amount}`)
     const tx = await contract.fundAgreement(agreementId, { value: val })
     console.log("tansaction: " + tx)
   } catch(err) {
     console.log(err)
   }
+  opRunning.value = opRunning.value.filter(id => id !== agreementId)
 }
 
 const requestRelease = async (agreementId) => {
-    opRunning.value.push(agreementId) // Show spinner for this agreement
+    opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
     alert('Please connect your wallet first')
@@ -133,13 +147,15 @@ const requestRelease = async (agreementId) => {
     
     const tx = await contract.requestRelease(agreementId)
     console.log("tansaction: " + tx)
+    opSuccess.value.push(agreementId)
   } catch(err) {
     console.log(err)
   }
-  opRunning.value = opRunning.value.filter(id => id !== agreementId) // Hide spinner for this agreement
+  opRunning.value = opRunning.value.filter(id => id !== agreementId)
 }
 
 const releaseFunds = async (agreementId) => {
+    opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
     alert('Please connect your wallet first')
@@ -156,6 +172,7 @@ const releaseFunds = async (agreementId) => {
   } catch(err) {
     console.log(err)
   }
+    opRunning.value = opRunning.value.filter(id => id !== agreementId)
 }
 
 onMounted(() => {
@@ -179,12 +196,18 @@ onMounted(() => {
                 <p>Buyer: {{ agreement.buyer }}</p>
                 <p>Amount: {{ agreement.amount }}</p>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && !isAgreementAccepted(agreement)" @click="acceptAgreement(agreement.agreementId)">Accept agreement</button>
-                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && canBeFunded(agreement)" @click="fundAgreement(agreement.agreementId, agreement.amount)">Fund agreement</button>
-                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && canRequestRelease(agreement)" @click="requestRelease(agreement.agreementId)">Request Release</button>
-                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && isReleaseRequested(agreement)" @click="releaseFunds(agreement.agreementId)">Release funds</button>
-                    <div class="spinner-border" role="status" v-if="isSpinnerVisible(agreement.agreementId)">
+                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && !isAgreementAccepted(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="acceptAgreement(agreement.agreementId)">Accept agreement</button>
+                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && canBeFunded(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="fundAgreement(agreement.agreementId, agreement.amount)">Fund agreement</button>
+                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && canRequestRelease(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="requestRelease(agreement.agreementId)">Request Release</button>
+                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && isReleaseRequested(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="releaseFunds(agreement.agreementId)">Release funds</button>
+                    <div class="spinner-border" role="status" v-if="isOpRunning(agreement.agreementId)">
                     <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div class="d-flex p-3">
+                    <div class="alert alert-success alert-dismissible" role="alert" v-if="showSuccessAlert(agreement.agreementId)">
+                    <div>Operation completed successfully!</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @click="resetSuccess(agreement.agreementId)"></button>
                     </div>
                 </div>
                 <ul>
