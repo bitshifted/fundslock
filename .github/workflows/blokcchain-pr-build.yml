@@ -28,7 +28,7 @@ jobs:
           make solidity-deps-install
       - name: Build and test
         run: |
-          make build
+          NETWORK_NAME=sepolia make build
       - name: Test coverage
         run: |
           make coverage-lcov
