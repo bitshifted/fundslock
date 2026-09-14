@@ -16,6 +16,11 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
+    strategy:
+      matrix:
+        network: ${{ fromJson(needs.discover-matrix.outputs.networks) }}
+    needs:
+      - discover-matrix
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,5 +38,19 @@ jobs:
           npm install
       - name: Generate Code from Schema
         run: npm run codegen
-      - name: Build and test Seplia Subgraph
-        run: npm run build:sepolia && npm run test
+      - name: Build and test subgraph
+        run: NETWORK=${{ matrix.network }} npm run build && npm run test
+
+  discover-matrix:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./graph
+    outputs:
+      networks: ${{ steps.set-networks.outputs.networks }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set networks matrix
+        id: set-networks
+        run: echo "networks=$(jq -c 'keys' networks.json)" >> $GITHUB_OUTPUT
