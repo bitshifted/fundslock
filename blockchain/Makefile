@@ -38,7 +38,7 @@ copyright-check:
 
 clean:
 	@echo "cleaning output directory..."
-	froge clean
+	forge clean
 
 format-check:
 	@echo "Checking code formatting..."
