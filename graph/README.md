@@ -37,6 +37,13 @@ Deployment is done autmomatically via Github Action. Process assumes that smart 
 2. create a branch and push changes to Github. This will force buinding and testing your subgraph.
 3. Once all tests pass, merge the pull request. This will trigger Github workflow to deploy the subgraph
 
+## Publishing the subgraph
+
+Deployment process only deploys subgraphs to target network, and they can be accessed via rate limited endpoints. For production deployments, subgraphs need to be published.
+
+Publishing requires having crypto wallet with GRT token with which you pay the publishing. For security reasons and fact that this involves real-world money, publishing is not automated, but rather should be done via Subgraph studion UI.
+
+
 # Troubleshooting
 
 In test/dev environemnt, if graph is not queried for a prolonged time, it may be purged. The solution is to force a dummy commit into this directory, triggering a fresh release to dev/test environment.
