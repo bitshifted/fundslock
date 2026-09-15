@@ -96,6 +96,18 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Graph CLI Global
+        run: npm install -g @graphprotocol/graph-cli
+      - name: Install dependencies
+        run: npm install
+      - name: Generate Code from Schema
+        env:
+          NETWORK: ${{ matrix.network }}
+        run: npm run codegen && npm run build
       - name: Setup environment variables
         run: echo "VERSION_LABEL=${{ needs.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
       - name: Set auth key

@@ -37,6 +37,7 @@ Deployment is done autmomatically via Github Action. Process assumes that smart 
 2. create a branch and push changes to Github. This will force buinding and testing your subgraph.
 3. Once all tests pass, merge the pull request. This will trigger Github workflow to deploy the subgraph
 
+
 # Troubleshooting
 
 In test/dev environemnt, if graph is not queried for a prolonged time, it may be purged. The solution is to force a dummy commit into this directory, triggering a fresh release to dev/test environment.
