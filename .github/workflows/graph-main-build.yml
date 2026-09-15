@@ -122,6 +122,7 @@ jobs:
       - name: Deploy Graph to network
         env:
           NETWORK: ${{ matrix.network }}
+          GRAPH_SLUG: ${{ format('fundslock-{0}', matrix.network) }}
         run: |
           echo "Version label: $VERSION_LABEL"
           npm run deploy -- --version-label $VERSION_LABEL
