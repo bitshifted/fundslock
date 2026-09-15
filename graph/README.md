@@ -4,27 +4,38 @@
 This component creates and deploys Graph protocol subgraph for FundsLock smart contract. It enables querying events and 
 changes emitted from the contract.
 
-Currently supports only subgraphs on Sepolia testnet.
+Subgraphs are supported on all networks where contract is deployed.
 
 
 ## Setup 
 
-Subgraph must be created in [Subgraph Studio](https://thegraph.com/studio/), with the following slugs per network:
+Subgraph must be created in [Subgraph Studio](https://thegraph.com/studio/), with the following slug format per network: `fundsloack-<network name>`. For example, following are valid fomats:
 
-* Sepoliaa testner: `fundslock-sepolia-eth`
+* Ethereum mainnet: `fundslock-ethereum`
+* Sepolia testnet: `fundslock-sepolia`
+* Arbitrum mainnet: `fundslock-arbitrum`
+* Arbitrum Sepolia tesnet: `fundslock-arbitrum-sepolia`
 
-Once the subgraph is created, note the API key associated with it.
+Once the subgraph is created, note the API key associated with it (for each graph).
 
 ## Deployment
 
-Before attempting deploymend, create Github secret named `GRAPH_SEPOLIA_ETH_KEY`, and set it's value to the API key found in Subgraph Studio in previous step.
+Before attempting deployment, create Github secret for each of the graphs you deploy. Secret name should follow format `GRAPH_<network name>_KEY`, so it can be automatically used in Github Action deployment.
 
-Deployment is done autmomatically via Github Action. The process is the following:
+For example, for graphs created in previous section, secret names should be:
 
-1. dpeloy smart contract using instructions provided in [blockchain README](../blockchain/README.md#deploying-to-testmainnet-using-aws-kms)
-2. Deployment will generate subgraph deployment information in this directory, specifically `networks.json` file. This is used to configure deployment information.
-3. create a branch and push changes to Github. This will force buinding and testing your subgraph.
-4. Once all tests pass, merge the pull request. This will trigger Github workflow to deploy the subgraph
+* `GRAPH_ETHEREUM_KEY`
+* `GRAPH_SEPOLIA_KEY`
+* `GRAPH_ARBITRUM_KEY`
+* `GRAPH_ARBITRUM_SEPOLIA_KEY`
+
+
+
+Deployment is done autmomatically via Github Action. Process assumes that smart contract is alrteady deployed to each network following the instructions provided in [blockchain documentation](../blockchain/doc/deployment.md):
+
+1. Smart contract deployment will generate subgraph deployment information in this directory, specifically `networks.json` file. This is used to configure deployment information.
+2. create a branch and push changes to Github. This will force buinding and testing your subgraph.
+3. Once all tests pass, merge the pull request. This will trigger Github workflow to deploy the subgraph
 
 # Troubleshooting
 

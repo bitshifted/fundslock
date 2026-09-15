@@ -8,14 +8,33 @@ on:
       - 'graph/**'
 
 jobs:
+  discover-networks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./graph
+    outputs:
+      networks: ${{ steps.set-networks.outputs.networks }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set networks matrix
+        id: set-networks
+        run: echo "networks=$(jq -c 'keys' networks.json)" >> $GITHUB_OUTPUT
+
   build-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./graph
+    needs:
+      - discover-networks
     permissions:
       pull-requests: write
       contents: write
+    strategy:
+      matrix:
+        network: ${{ fromJson(needs.discover-networks.outputs.networks) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,16 +48,29 @@ jobs:
       - name: Install Graph CLI Global
         run: npm install -g @graphprotocol/graph-cli
       - name: Install dependencies
-        run: |
-          npm install
+        run: npm install
       - name: Generate Code from Schema
         run: npm run codegen
-      - name: Build and test Seplia Subgraph
-        run: npm run build:sepolia && npm run test
-      - name: Authorize graph
-        env:
-          GRAPH_SEPOLIA_ETH_KEY: ${{ secrets.GRAPH_SEPOLIA_ETH_KEY }}
-        run: graph auth ${GRAPH_SEPOLIA_ETH_KEY}
+      - name: Build and test subgraph
+        run: NETWORK=${{ matrix.network }} npm run build && npm run test
+
+  calculate-version:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./graph
+    needs:
+      - build-and-test
+    outputs:
+      version-string: ${{ steps.calculate-version.outputs.version-string }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Configure version information
         id: calculate-version
         uses: bitshifted/git-auto-semver@v2
@@ -46,10 +78,38 @@ jobs:
           create_tag: true
           initial_version: '1.0.1'
           tag_prefix: 'gr-'
+
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./graph
+    needs:
+      - discover-networks
+      - calculate-version
+    strategy:
+      matrix:
+        network: ${{ fromJson(needs.discover-networks.outputs.networks) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup environment variables
+        run: echo "VERSION_LABEL=${{ needs.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
+      - name: Set auth key
+        id: set-auth-key
         run: |
-           echo "VERSION_LABEL=${{ steps.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
-      - name: Deploy Graph to Sepolia
+          KEY_NAME="GRAPH_$(echo ${{ matrix.network }} | tr '[:lower:]' '[:upper:]')_KEY"
+          echo "AUTH_KEY_NAME=${KEY_NAME}" >> $GITHUB_OUTPUT
+      - name: Authorize graph
+        env:
+          AUTH_KEY: ${{ secrets[steps.set-auth-key.outputs.AUTH_KEY_NAME] }}
+        run: graph auth ${AUTH_KEY}
+      - name: Deploy Graph to network
+        env:
+          NETWORK: ${{ matrix.network }}
         run: |
           echo "Version label: $VERSION_LABEL"
-          npm run deploy:sepolia --  --version-label $VERSION_LABEL
+          npm run deploy -- --version-label $VERSION_LABEL
