@@ -54,17 +54,17 @@ jobs:
       - name: Build and test subgraph
         run: NETWORK=${{ matrix.network }} npm run build && npm run test
 
-  deploy:
+  calculate-version:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./graph
     needs:
-      - discover-networks
       - build-and-test
-    strategy:
-      matrix:
-        network: ${{ fromJson(needs.discover-networks.outputs.networks) }}
+    outputs:
+      version-string: ${{ steps.calculate-version.outputs.version-string }}
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,8 +78,26 @@ jobs:
           create_tag: true
           initial_version: '1.0.1'
           tag_prefix: 'gr-'
+
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./graph
+    needs:
+      - discover-networks
+      - calculate-version
+    strategy:
+      matrix:
+        network: ${{ fromJson(needs.discover-networks.outputs.networks) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup environment variables
-        run: echo "VERSION_LABEL=${{ steps.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
+        run: echo "VERSION_LABEL=${{ needs.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
       - name: Set auth key
         id: set-auth-key
         run: |
