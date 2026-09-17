@@ -113,7 +113,7 @@ jobs:
       - name: Set auth key
         id: set-auth-key
         run: |
-          KEY_NAME="GRAPH_$(echo ${{ matrix.network }} | tr '[:lower:]' '[:upper:]')_KEY"
+          KEY_NAME="GRAPH_$(echo ${{ matrix.network }} | tr '-' '_' | tr '[:lower:]' '[:upper:]')_KEY"
           echo "AUTH_KEY_NAME=${KEY_NAME}" >> $GITHUB_OUTPUT
       - name: Authorize graph
         env:
