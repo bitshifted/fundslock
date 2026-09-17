@@ -30,12 +30,15 @@ For example, for graphs created in previous section, secret names should be:
 * `GRAPH_ARBITRUM_SEPOLIA_KEY`
 
 
-
 Deployment is done autmomatically via Github Action. Process assumes that smart contract is alrteady deployed to each network following the instructions provided in [blockchain documentation](../blockchain/doc/deployment.md):
 
 1. Smart contract deployment will generate subgraph deployment information in this directory, specifically `networks.json` file. This is used to configure deployment information.
 2. create a branch and push changes to Github. This will force buinding and testing your subgraph.
 3. Once all tests pass, merge the pull request. This will trigger Github workflow to deploy the subgraph
+
+## Publishing the graph
+
+Graphs are not published from CI/CD pipeline, but rather from Subgraph Studio UI. You need to have GRT token in the wallet in order to publish the graph.
 
 
 # Troubleshooting
