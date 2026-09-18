@@ -35,7 +35,7 @@ func Start() error {
 		log.Logger.Error().Err(err).Msg("Failed to load configuration")
 		return err
 	}
-	agreementClient := newAgreementClient(model.AppConfig.GraphUrl, model.AppConfig.GraphApiKey)
+	initGraphqlClients()
 	// initialze JWT authentication middlwware
 	jwtInit()
 
@@ -51,7 +51,7 @@ func Start() error {
 		r.Use(jwtauth.Authenticator)
 
 		r.Get("/api/v1/users/session", getSession)
-		r.Get("/api/v1/agreements", agreementClient.getAgreements)
+		r.Get("/api/v1/agreements", getAgreements)
 	})
 
 	server := http.Server{
