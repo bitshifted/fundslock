@@ -90,7 +90,7 @@ type HttpGraphqlClient struct {
 	Client    *http.Client
 }
 
-func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string, chain string) ([]AgreementResponseItem, error) {
+func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress, chain string) ([]AgreementResponseItem, error) {
 	log.Logger.Debug().Msg("Running agreements query")
 	query := QueryPayload{
 		Query:     agreementsQuery,

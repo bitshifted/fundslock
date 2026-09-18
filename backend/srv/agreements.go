@@ -24,17 +24,12 @@ var graphClients = make(map[string]*agreementClient)
 func initGraphqlClients() {
 	graphConfig := model.AppConfig.GraphConfig
 	for _, config := range graphConfig {
-		// if _, exists := graphClients[config.Chain]; !exists {
 		graphClients[config.Chain] = &agreementClient{
 			chain:  config.Chain,
 			client: graph.NewGraphqlClient(config.GraphUrl, config.ApiKey),
 		}
 		log.Logger.Info().Msgf("Initialized agreement client for chain %s", config.Chain)
-		// }
 	}
-	// return &agreementClient{
-	// 	client: graph.NewGraphqlClient(endpoint, authToken),
-	// }
 }
 
 func getAgreements(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +52,7 @@ func getAgreements(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Logger.Error().Err(err).Msgf("Failed to query agreement logs for chain %s", chain)
 		w.WriteHeader(http.StatusInternalServerError)
-		_, err := w.Write([]byte("Failed to query agreement logs"))
+		_, err = w.Write([]byte("Failed to query agreement logs"))
 		if err != nil {
 			log.Logger.Error().Err(err).Msg("Failed to write response")
 		}

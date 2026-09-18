@@ -15,6 +15,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+const (
+	testChain = "test-chain"
+)
+
 func Test_GetAgreementsSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -22,7 +26,7 @@ func Test_GetAgreementsSuccess(t *testing.T) {
 
 	items := []graph.AgreementResponseItem{
 		{
-			Chain:       "test-chain",
+			Chain:       testChain,
 			AgreementId: 123,
 			Seller:      "0x1231231323344",
 			Buyer:       "0x3453453453453",
@@ -37,7 +41,7 @@ func Test_GetAgreementsSuccess(t *testing.T) {
 		},
 	}
 	graphClients["test-chain"] = &agreementClient{
-		chain:  "test-chain",
+		chain:  testChain,
 		client: mockClient,
 	}
 	mockClient.EXPECT().QueryAgreementsForAddress(gomock.Any(), gomock.Any()).Return(items, nil)
@@ -51,7 +55,8 @@ func Test_GetAgreementsSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	body, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "[{\"agreementId\":123,\"seller\":\"0x1231231323344\",\"buyer\":\"0x3453453453453\""+
-		",\"amount\":1.2,\"status\":1,\"statusChanges\":[{\"status\":1,\"timestamp\":\"2023-01-01T12:00:00Z\"}],\"chain\":\"test-chain\"}]\n", string(body))
+		",\"amount\":1.2,\"status\":1,\"statusChanges\":[{\"status\":1,\"timestamp\":\"2023-01-01T12:00:00Z\"}],"+
+		"\"chain\":\"test-chain\"}]\n", string(body))
 }
 
 func Test_GetAgreementsQueryError(t *testing.T) {
@@ -60,7 +65,7 @@ func Test_GetAgreementsQueryError(t *testing.T) {
 
 	mockClient := graph.NewMockGraphqlClient(ctrl)
 	graphClients["test-chain"] = &agreementClient{
-		chain:  "test-chain",
+		chain:  testChain,
 		client: mockClient,
 	}
 
