@@ -15,7 +15,7 @@ const networkInfo = {
     },
     "arbitrum-sepolia": {
         displayName: "Arbitrum Sepolia",
-        chainId: "0x66eeb",
+        chainId: "0x66eee",
         rpcUrl: ARBITRUM_SEPOLIA_RPC_URL,
     },
 }

@@ -5,7 +5,8 @@ import { useAuthStore } from '@/stores/auth';
 import { useAppKitProvider } from '@reown/appkit/vue';
 import { BrowserProvider } from 'ethers';
 import { Contract } from 'ethers';
-import { supportedNetworks, networkInfo } from '@/eth/networks';
+import { supportedNetworks, networkInfo, contractAddressForNetwork } from '@/eth/networks';
+import { switchChain } from '@/eth/index.js'
 
 const appKitProvider = useAppKitProvider('eip155')
 
@@ -28,10 +29,13 @@ const  createAgreement = async () => {
     return
   }
   try {
-    await switchToSepolia(ethereum)
+    await switchChain(ethereum, network.value)
+    console.log(`Switched to network: ${network.value}`)
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const contractAddress = contractAddressForNetwork(network.value)
+    console.log(`Using contract address: ${contractAddress}`)
+    const contract = new Contract(contractAddress, getAbi(), signer)
     const address = await signer.getAddress()
     const calcAmount = amount.value * 1000000000000000000
     const buyerAddress = side.value === 'buyer' ? address : counterparty.value

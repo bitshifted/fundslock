@@ -5,7 +5,7 @@ import { onMounted, ref,computed } from 'vue';
 import { BACKEND_URL } from '@/config/common.js'
 import {STATUS_FUNDED, STATUS_RELEASED, STATUS_SELLER_ACCEPTED, STATUS_SELLER_REQUESTED_RELEASE, statusMap} from '@/assets/abi/enums.js'
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/vue';
-import { switchToSepolia } from '@/eth/index.js'
+import { switchChain } from '@/eth/index.js'
 import { BrowserProvider, parseEther } from 'ethers';
 import { Contract } from 'ethers';
 import { supportedNetworks } from '@/eth/networks';
@@ -102,10 +102,10 @@ const acceptAgreement = async (agreementId) => {
     return
   }
   try {
-    await switchToSepolia(ethereum)
+    await switchChain(ethereum, network.value)
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const contract = new Contract(networkInfo[network.value].contractAddress, getAbi(), signer)
     
     const tx = await contract.sellerAcceptAgreement(agreementId)
     console.log("tansaction: " + tx)

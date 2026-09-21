@@ -1,10 +1,12 @@
+import {networkInfo} from './networks.js'
 
-async function switchChain(ethereum, chainId) {
+
+async function switchChain(ethereum, networkName) {
   if (!ethereum) return
   try {
     await ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId }]
+      params: [{ chainId: networkInfo[networkName].chainId }],
     })
   } catch (error) {
     console.error('Failed to switch chain:', error)
@@ -13,4 +15,4 @@ async function switchChain(ethereum, chainId) {
   }
 }
 
-export {switchChain as switchToSepolia}
+export {switchChain}
