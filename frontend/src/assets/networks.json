@@ -1,0 +1,14 @@
+{
+  "sepolia": {
+    "FundsLock": {
+      "address": "0xD1668F1Cd83aB4908eAb2b0c0680E377DB724F79",
+      "startBlock": 11704484
+    }
+  },
+  "arbitrum-sepolia": {
+    "FundsLock": {
+      "address": "0xa83091886c42FF4A849E997882FA7c99Ca6F5730",
+      "startBlock": 11704581
+    }
+  }
+}

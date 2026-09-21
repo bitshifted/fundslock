@@ -2,12 +2,13 @@
 import contractAbi from '@/assets/abi/FundsLock.json'
 import { useAuthStore } from '@/stores/auth.js';
 import { onMounted, ref,computed } from 'vue';
-import { BACKEND_URL,CONTRACT_ADDRESS } from '@/config/common.js'
+import { BACKEND_URL } from '@/config/common.js'
 import {STATUS_FUNDED, STATUS_RELEASED, STATUS_SELLER_ACCEPTED, STATUS_SELLER_REQUESTED_RELEASE, statusMap} from '@/assets/abi/enums.js'
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/vue';
 import { switchToSepolia } from '@/eth/index.js'
 import { BrowserProvider, parseEther } from 'ethers';
 import { Contract } from 'ethers';
+import { supportedNetworks } from '@/eth/networks';
 
 const AGREEMENTS_URL = `${BACKEND_URL}/api/v1/agreements`
 
@@ -38,12 +39,16 @@ const resetSuccess = (agreementId) => {
 
 async function fetchAgreements() {
     console.log(`auth token: ${authStore.token}`)
-    const response = await fetch(AGREEMENTS_URL,{
-        headers: {
-            'Authorization': `Bearer ${authStore.token}`
-        }
-    })
-    agreementsList.value = await response.json()
+    const promises = supportedNetworks.map((net) =>
+        fetch(`${AGREEMENTS_URL}?chain=${net}`, {
+            headers: {
+                'Authorization': `Bearer ${authStore.token}`
+            }
+        })
+    )
+    const responses = await Promise.all(promises)
+    const lists = await Promise.all(responses.map((r) => r.json()))
+    agreementsList.value = lists.flat()
     const curAddress = eip155Account.value.address
     console.log(`current address: ${curAddress}`)
 }
