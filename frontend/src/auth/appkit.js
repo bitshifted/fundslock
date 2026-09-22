@@ -1,5 +1,5 @@
 import { createAppKit } from '@reown/appkit'
-import { mainnet, sepolia } from '@reown/appkit/networks'
+import { mainnet, sepolia, arbitrumSepolia } from '@reown/appkit/networks'
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import {siweConfig } from '@/auth/siwe.js'
 
@@ -10,7 +10,7 @@ const PROJECT_ID = 'e103ded1feccd94ad1f759a8a13dce0f' // Replace with your Reown
 // Initialize WalletConnect Modal
 const appKitModal = createAppKit({
   adapters: [new EthersAdapter()],
-  networks: [mainnet, sepolia],
+  networks: [mainnet, sepolia, arbitrumSepolia],
   defaultNetwork: sepolia,
   projectId: PROJECT_ID,
   metadata: {

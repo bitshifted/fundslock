@@ -76,10 +76,11 @@ type AgreementResponseItem struct {
 	Amount        float64                 `json:"amount"`
 	Status        int                     `json:"status"`
 	StatusChanges []AgreementStatusChange `json:"statusChanges"`
+	Chain         string                  `json:"chain"`
 }
 
 type GraphqlClient interface {
-	QueryAgreementsForAddress(string) ([]AgreementResponseItem, error)
+	QueryAgreementsForAddress(string, string) ([]AgreementResponseItem, error)
 }
 
 type HttpGraphqlClient struct {
@@ -89,7 +90,7 @@ type HttpGraphqlClient struct {
 	Client    *http.Client
 }
 
-func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]AgreementResponseItem, error) {
+func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress, chain string) ([]AgreementResponseItem, error) {
 	log.Logger.Debug().Msg("Running agreements query")
 	query := QueryPayload{
 		Query:     agreementsQuery,
@@ -129,7 +130,7 @@ func (c *HttpGraphqlClient) QueryAgreementsForAddress(userAddress string) ([]Agr
 		log.Logger.Error().Msgf("Failed to unmarshal response body: %v", err)
 		return nil, err
 	}
-	return convertToResultResponse(result.Data.AgreementLogs)
+	return convertToResultResponse(result.Data.AgreementLogs, chain)
 }
 
 func NewGraphqlClient(endpoint, authToken string) GraphqlClient {
@@ -142,7 +143,7 @@ func NewGraphqlClient(endpoint, authToken string) GraphqlClient {
 	}
 }
 
-func convertToResultResponse(logs []AgreementLog) ([]AgreementResponseItem, error) {
+func convertToResultResponse(logs []AgreementLog, chain string) ([]AgreementResponseItem, error) {
 	out := make(map[string][]AgreementLog, 0)
 	keys := make([]string, 0)
 	for _, l := range logs {
@@ -183,6 +184,7 @@ func convertToResultResponse(logs []AgreementLog) ([]AgreementResponseItem, erro
 			Amount:        calcAmount,
 			Status:        lst[0].Status,
 			StatusChanges: statusChanges,
+			Chain:         chain,
 		})
 	}
 	return res, nil

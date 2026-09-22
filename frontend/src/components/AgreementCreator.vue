@@ -1,11 +1,12 @@
 <script setup>
 import contractAbi from '@/assets/abi/FundsLock.json'
-import { CONTRACT_ADDRESS } from '@/config/common';
 import { onMounted, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useAppKitProvider } from '@reown/appkit/vue';
 import { BrowserProvider } from 'ethers';
 import { Contract } from 'ethers';
+import { supportedNetworks, networkInfo, contractAddressForNetwork } from '@/eth/networks';
+import { switchChain } from '@/eth/index.js'
 
 const appKitProvider = useAppKitProvider('eip155')
 
@@ -17,23 +18,9 @@ function getAbi() {
 const counterparty = ref('')
 const amount = ref(0)
 const currency = ref('ETH')
-const network = ref('sepolia')
+const network = ref(supportedNetworks[0])
 const side = ref('buyer')
 
-async function switchToSepolia(ethereum) {
-  if (!ethereum) return
-  const sepoliaChainId = '0xaa36a7' // Sepolia chain ID in hex
-  try {
-    await ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: sepoliaChainId }]
-    })
-  } catch (error) {
-    console.error('Failed to switch to Sepolia:', error)
-    alert('Please switch to Sepolia network in your wallet')
-    throw error
-  }
-}
 
 const  createAgreement = async () => {
   const ethereum = appKitProvider?.walletProvider
@@ -42,10 +29,13 @@ const  createAgreement = async () => {
     return
   }
   try {
-    await switchToSepolia(ethereum)
+    await switchChain(ethereum, network.value)
+    console.log(`Switched to network: ${network.value}`)
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const contractAddress = contractAddressForNetwork(network.value)
+    console.log(`Using contract address: ${contractAddress}`)
+    const contract = new Contract(contractAddress, getAbi(), signer)
     const address = await signer.getAddress()
     const calcAmount = amount.value * 1000000000000000000
     const buyerAddress = side.value === 'buyer' ? address : counterparty.value
@@ -74,11 +64,10 @@ const  createAgreement = async () => {
         <option value="seller">Seller</option>
       </select>
     </div>
-    <label for="side" class="col-sm-2 col-form-label">Network: </label>
+    <label for="side" class="col-sm-3 col-form-label">Network: </label>
     <div class="col-sm-1">
       <select id="network" class="form-control" v-model="network">
-        <option value="ethereum">Ethereum</option>
-        <option value="sepolia">Sepolia</option>
+        <option v-for="net in supportedNetworks" :key="net" :value="net">{{ networkInfo[net].displayName }}</option>
       </select>
     </div>
   </div>

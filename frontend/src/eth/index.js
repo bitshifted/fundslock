@@ -1,17 +1,22 @@
+import {networkInfo} from './networks.js'
 
-async function switchToSepolia(ethereum) {
-  if (!ethereum) return
-  const sepoliaChainId = '0xaa36a7' // Sepolia chain ID in hex
+
+async function switchChain(ethereum, networkName) {
+  console.log(`Switching to network: ${networkName}`)
+  if (!ethereum) {
+    console.error('Ethereum provider not found')
+    return
+  }
   try {
     await ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: sepoliaChainId }]
+      params: [{ chainId: networkInfo[networkName].chainId }],
     })
   } catch (error) {
-    console.error('Failed to switch to Sepolia:', error)
-    alert('Please switch to Sepolia network in your wallet')
+    console.error('Failed to switch chain:', error)
+    alert('Please switch to the desired network in your wallet')
     throw error
   }
 }
 
-export {switchToSepolia}
+export {switchChain}

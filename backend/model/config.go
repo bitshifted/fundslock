@@ -5,14 +5,21 @@ package model
 
 import (
 	"bitshifted/fundslock-be/log"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"os"
 	"strconv"
 )
 
+type GraphConfig struct {
+	Chain    string `json:"chain"`
+	GraphUrl string `json:"graphUrl"`
+	ApiKey   string `json:"apiKey"`
+}
+
 type ConfigurationVariables struct {
-	GraphUrl             string
-	GraphApiKey          string
+	GraphConfig          []GraphConfig
 	JwtSecretKey         []byte
 	AccessTokenDuration  int64 // in seconds
 	RefreshTokenDuration int64 // in seconds
@@ -40,14 +47,12 @@ func NewConfigurationLoader() ConfifgurationLoader {
 var AppConfig = ConfigurationVariables{}
 
 func (e *EnvironmentVariableConfigurationLoader) Load() error {
-	graphUrl := os.Getenv("GRAPH_URL")
-	if graphUrl == "" {
-		return errors.New("configuration variable GRAPH_URL not set")
+	graphConfig, err := decodeGraphConfig()
+	if err != nil {
+		return errors.New("failed to decode GRAPH_CONFIG_BASE64: " + err.Error())
 	}
-	graphApiKey := os.Getenv("GRAPH_API_KEY")
-	if graphApiKey == "" {
-		return errors.New("configuration variable GRAPH_API_KEY not set")
-	}
+	AppConfig.GraphConfig = graphConfig
+	log.Logger.Debug().Msgf("Loaded graph configuration: %+v", graphConfig)
 	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
 	if jwtSecretKey == "" {
 		return errors.New("configuration variable JWT_SECRET_KEY not set")
@@ -70,12 +75,27 @@ func (e *EnvironmentVariableConfigurationLoader) Load() error {
 		return errors.New("configuration variable COOKIE_DOMAIN not set." +
 			"Set it to the domain of your application (e.g., localhost for local development)")
 	}
-	AppConfig.GraphUrl = graphUrl
-	AppConfig.GraphApiKey = graphApiKey
 	AppConfig.JwtSecretKey = []byte(jwtSecretKey)
 	AppConfig.AccessTokenDuration = accessTokenDuration
 	AppConfig.RefreshTokenDuration = refreshTokenDuration
 	AppConfig.SecureCookie = secureCookie
 	AppConfig.CookieDomain = cookieDDomain
 	return nil
+}
+
+func decodeGraphConfig() ([]GraphConfig, error) {
+	encoded := os.Getenv("GRAPH_CONFIG_BASE64")
+	if encoded == "" {
+		return nil, errors.New("configuration variable GRAPH_CONFIG_BASE64 not set")
+	}
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+	var graphConfig []GraphConfig
+	err = json.Unmarshal(decoded, &graphConfig)
+	if err != nil {
+		return nil, err
+	}
+	return graphConfig, nil
 }

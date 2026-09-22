@@ -15,17 +15,18 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+const (
+	testChain = "test-chain"
+)
+
 func Test_GetAgreementsSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockClient := graph.NewMockGraphqlClient(ctrl)
 
-	agreementCLient := &agreementClient{
-		client: mockClient,
-	}
-
 	items := []graph.AgreementResponseItem{
 		{
+			Chain:       testChain,
 			AgreementId: 123,
 			Seller:      "0x1231231323344",
 			Buyer:       "0x3453453453453",
@@ -39,34 +40,41 @@ func Test_GetAgreementsSuccess(t *testing.T) {
 			},
 		},
 	}
-
-	mockClient.EXPECT().QueryAgreementsForAddress(gomock.Any()).Return(items, nil)
-	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/v1/agreements", nil)
+	graphClients["test-chain"] = &agreementClient{
+		chain:  testChain,
+		client: mockClient,
+	}
+	mockClient.EXPECT().QueryAgreementsForAddress(gomock.Any(), gomock.Any()).Return(items, nil)
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/v1/agreements?chain=test-chain", nil)
 	rec := httptest.NewRecorder()
 
-	agreementCLient.getAgreements(rec, req)
+	getAgreements(rec, req)
 	res := rec.Result()
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	body, _ := io.ReadAll(res.Body)
 	assert.Equal(t, "[{\"agreementId\":123,\"seller\":\"0x1231231323344\",\"buyer\":\"0x3453453453453\""+
-		",\"amount\":1.2,\"status\":1,\"statusChanges\":[{\"status\":1,\"timestamp\":\"2023-01-01T12:00:00Z\"}]}]\n", string(body))
+		",\"amount\":1.2,\"status\":1,\"statusChanges\":[{\"status\":1,\"timestamp\":\"2023-01-01T12:00:00Z\"}],"+
+		"\"chain\":\"test-chain\"}]\n", string(body))
 }
 
 func Test_GetAgreementsQueryError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := graph.NewMockGraphqlClient(ctrl)
-	mockClient.EXPECT().QueryAgreementsForAddress(gomock.Any()).Return(nil, assert.AnError)
 
-	agreementCLient := &agreementClient{
+	mockClient := graph.NewMockGraphqlClient(ctrl)
+	graphClients["test-chain"] = &agreementClient{
+		chain:  testChain,
 		client: mockClient,
 	}
-	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/v1/agreements", nil)
+
+	mockClient.EXPECT().QueryAgreementsForAddress(gomock.Any(), gomock.Any()).Return(nil, assert.AnError)
+
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/v1/agreements?chain=test-chain", nil)
 	rec := httptest.NewRecorder()
 
-	agreementCLient.getAgreements(rec, req)
+	getAgreements(rec, req)
 	res := rec.Result()
 	defer res.Body.Close()
 
