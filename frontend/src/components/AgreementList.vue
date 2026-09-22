@@ -1,5 +1,6 @@
 <script setup>
 import contractAbi from '@/assets/abi/FundsLock.json'
+import {chainIcons} from '@/assets/icons/chain-icons.js'
 import { useAuthStore } from '@/stores/auth.js';
 import { onMounted, ref,computed } from 'vue';
 import { BACKEND_URL } from '@/config/common.js'
@@ -8,7 +9,7 @@ import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/vue';
 import { switchChain } from '@/eth/index.js'
 import { BrowserProvider, parseEther } from 'ethers';
 import { Contract } from 'ethers';
-import { supportedNetworks } from '@/eth/networks';
+import { supportedNetworks, contractAddressForNetwork } from '@/eth/networks';
 
 const AGREEMENTS_URL = `${BACKEND_URL}/api/v1/agreements`
 
@@ -94,7 +95,7 @@ function isReleaseRequested(agreement) {
     return agreement.statusChanges.some(statusChange => statusChange.status === STATUS_SELLER_REQUESTED_RELEASE) && !agreement.statusChanges.some(statusChange => statusChange.status === STATUS_RELEASED) // Check if status 1 (Funded) or 5 (Released) exists in statusChanges
 }
 
-const acceptAgreement = async (agreementId) => {
+const acceptAgreement = async (agreementId, networkName) => {
     opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
@@ -102,10 +103,13 @@ const acceptAgreement = async (agreementId) => {
     return
   }
   try {
-    await switchChain(ethereum, network.value)
+    console.log(`network: ${networkName}`)
+    await switchChain(ethereum, networkName)
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new Contract(networkInfo[network.value].contractAddress, getAbi(), signer)
+    const contractAddress = contractAddressForNetwork(networkName)
+    console.log(`Using contract address: ${contractAddress}`)
+    const contract = new Contract(contractAddress, getAbi(), signer)
     
     const tx = await contract.sellerAcceptAgreement(agreementId)
     console.log("tansaction: " + tx)
@@ -115,7 +119,7 @@ const acceptAgreement = async (agreementId) => {
   opRunning.value = opRunning.value.filter(id => id !== agreementId)
 }
 
-const fundAgreement = async (agreementId, amount) => {
+const fundAgreement = async (agreementId, amount, networkName) => {
     opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
@@ -123,10 +127,10 @@ const fundAgreement = async (agreementId, amount) => {
     return
   }
   try {
-    await switchToSepolia(ethereum)
+    await switchChain(ethereum, networkName)
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const contract = new Contract(contractAddressForNetwork(networkName), getAbi(), signer)
     const val = parseEther(String(amount).substring(0, 18))
     console.log(`Funding agreement with id: ${agreementId} and amount: ${amount}`)
     const tx = await contract.fundAgreement(agreementId, { value: val })
@@ -137,7 +141,7 @@ const fundAgreement = async (agreementId, amount) => {
   opRunning.value = opRunning.value.filter(id => id !== agreementId)
 }
 
-const requestRelease = async (agreementId) => {
+const requestRelease = async (agreementId, networkName) => {
     opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
@@ -145,10 +149,10 @@ const requestRelease = async (agreementId) => {
     return
   }
   try {
-    await switchToSepolia(ethereum)
+    await switchChain(ethereum, networkName)
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const contract = new Contract(contractAddressForNetwork(networkName), getAbi(), signer)
     
     const tx = await contract.requestRelease(agreementId)
     console.log("tansaction: " + tx)
@@ -159,7 +163,7 @@ const requestRelease = async (agreementId) => {
   opRunning.value = opRunning.value.filter(id => id !== agreementId)
 }
 
-const releaseFunds = async (agreementId) => {
+const releaseFunds = async (agreementId, networkName) => {
     opRunning.value.push(agreementId)
      const ethereum = appKitProvider?.walletProvider
   if (!ethereum) {
@@ -167,10 +171,10 @@ const releaseFunds = async (agreementId) => {
     return
   }
   try {
-    await switchToSepolia(ethereum)
+    await switchChain(ethereum, networkName)
     const provider = new BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new Contract(CONTRACT_ADDRESS, getAbi(), signer)
+    const contract = new Contract(contractAddressForNetwork(networkName), getAbi(), signer)
     
     const tx = await contract.releaseFunds(agreementId)
     console.log("tansaction: " + tx)
@@ -192,7 +196,7 @@ onMounted(() => {
         <div class="accordion-item" v-for="agreement in agreementsList" >
             <div class="accordion-header">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse" :data-bs-target="`#collapse${agreement.agreementId}`" aria-expanded="false" :aria-controls="`collapse${index}`">
-                Agreement #{{  agreement.agreementId }} &nbsp; <span :class="statusLabelColor(agreement.status)">{{ statusMap.get(agreement.status) }}</span>
+                <img :src="chainIcons[agreement.chain]" width="32" height="32" alt="Chain Icon" class="me-3"> <span class="me-2">Agreement #{{  agreement.agreementId }} </span> &nbsp; <span :class="statusLabelColor(agreement.status)">{{ statusMap.get(agreement.status) }}</span>
             </button>
             </div>
             <div :id="`collapse${agreement.agreementId}`" class="accordion-collapse collapse" data-bs-parent="#agreements">
@@ -201,10 +205,10 @@ onMounted(() => {
                 <p>Buyer: {{ agreement.buyer }}</p>
                 <p>Amount: {{ agreement.amount }}</p>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && !isAgreementAccepted(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="acceptAgreement(agreement.agreementId)">Accept agreement</button>
-                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && canBeFunded(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="fundAgreement(agreement.agreementId, agreement.amount)">Fund agreement</button>
-                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && canRequestRelease(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="requestRelease(agreement.agreementId)">Request Release</button>
-                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && isReleaseRequested(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="releaseFunds(agreement.agreementId)">Release funds</button>
+                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && !isAgreementAccepted(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="acceptAgreement(agreement.agreementId, agreement.chain)">Accept agreement</button>
+                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && canBeFunded(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="fundAgreement(agreement.agreementId, agreement.amount, agreement.chain)">Fund agreement</button>
+                    <button type="button" class="btn btn-primary" v-if="isSeller(agreement) && canRequestRelease(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="requestRelease(agreement.agreementId, agreement.chain)">Request Release</button>
+                    <button type="button" class="btn btn-primary" v-if="isBuyer(agreement) && isReleaseRequested(agreement)" :disabled="isOpRunning(agreement.agreementId)" @click="releaseFunds(agreement.agreementId, agreement.chain)">Release funds</button>
                     <div class="spinner-border" role="status" v-if="isOpRunning(agreement.agreementId)">
                     <span class="visually-hidden">Loading...</span>
                     </div>

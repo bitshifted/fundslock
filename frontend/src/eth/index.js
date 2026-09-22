@@ -2,7 +2,11 @@ import {networkInfo} from './networks.js'
 
 
 async function switchChain(ethereum, networkName) {
-  if (!ethereum) return
+  console.log(`Switching to network: ${networkName}`)
+  if (!ethereum) {
+    console.error('Ethereum provider not found')
+    return
+  }
   try {
     await ethereum.request({
       method: 'wallet_switchEthereumChain',
