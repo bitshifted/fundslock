@@ -24,11 +24,70 @@ jobs:
           uses: actions/setup-go@v4
           with: 
             go-version: '1.25.5'
+        - name: Calculate version
+          id: calculate-version
+          uses: bitshifted/git-auto-semver@v2
+          with:
+            create_tag: true
+            initial_version: '1.0.0'
+            tag_prefix: 'be-'
+         name: Setup environment variables
+         run: |
+            echo "VERSION=${{ steps.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
+            echo "GIT_COMMIT_ID=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
         - name: Build and test
           run: |
             make build
-  release:
+        - name: Package
+          run: |
+            echo "VERSION: $VERSION"
+            echo "GIT_COMMIT_ID: $GIT_COMMIT_ID"
+            make package
+        - name: Upload Linux binary
+          uses: actions/upload-artifact@v4
+          with:
+            name: fundslock-be-binary-linux
+            path: target/linux-amd64/fundslock-be
+        - name: Upload release artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: dist-packages
+            path: target/dist
+   # Docker image publishing
+  publish-docker-image:
     needs: build
-    uses: ./.github/workflows/common-release.yaml
-    with:
-      tag-prefix: 'be-'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fundslock-be-binary-linux
+          path: target/linux-amd64/fundslock-be
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Github Docker registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build timestamp
+        id: docker-build-timestamp
+        run: |
+          TIMESTAMP=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo "ts_value=$TIMESTAMP" >> $GITHUB_OUTPUT
+      - name: Build Docker image
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          context: .
+          build-args: |
+            BUILD_DATE=${{ steps.docker-build-timestamp.outputs.ts_value }}
+            BUILD_VERSION=${{ needs.build.outputs.version }}
+            VCS_REF=${{ github.sha }}
+          tags: ghcr.io/bitshifted/liftoff:${{ needs.build-and-test.outputs.version }}
+  

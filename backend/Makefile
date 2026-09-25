@@ -31,6 +31,11 @@ build: clean init check-license-headers lint  test
 	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o ${TARGET_DIR}/macos-amd64/fundslock-be
 	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o ${TARGET_DIR}/macos-arm64/fundslock-be
 
+package: build
+	mkdir ${TARGET_DIR}/dist
+	tar -C ${TARGET_DIR}/linux-amd64 -czvf ${TARGET_DIR}/dist/fundslock-be-linux-amd64-${VERSION}.tar.gz fundslock-be
+	tar -C ${TARGET_DIR}/linux-arm64 -czvf ${TARGET_DIR}/dist/fundslock-be-linux-arm64-${VERSION}.tar.gz fundslock-be
+
 
 add-license-headers:
 	go install github.com/google/addlicense@v1.1.1
