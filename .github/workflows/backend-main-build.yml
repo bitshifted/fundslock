@@ -31,10 +31,10 @@ jobs:
             create_tag: true
             initial_version: '1.0.0'
             tag_prefix: 'be-'
-         name: Setup environment variables
-         run: |
-            echo "VERSION=${{ steps.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
-            echo "GIT_COMMIT_ID=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
+        - name: Setup environment variables
+          run: |
+              echo "VERSION=${{ steps.calculate-version.outputs.version-string }}" >> $GITHUB_ENV
+              echo "GIT_COMMIT_ID=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
         - name: Build and test
           run: |
             make build

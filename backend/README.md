@@ -46,4 +46,7 @@ GRAPH_CONFIG_BASE64=W3siY2hhaW4iOiJzZXBvbGlhIiwiZ3JhcGhVcmwiOiJodHRwczovL3NvbWVo
 
 Backend uses JWT tokens and wallet signing to authenticate users. Once user connetcs the wallet in frontend, they are prompted to authenticate with SIWE (Sign In With Ethereum) message. Based on the message, backend issues access token and refresh token.
 
+# Deployment
+
+Automated build action creates Docker image for the backend. This can be deployed automatically in several ways:
 
