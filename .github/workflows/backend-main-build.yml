@@ -40,21 +40,11 @@ jobs:
         - name: Build and test
           run: |
             make build
-        - name: Package
-          run: |
-            echo "VERSION: $VERSION"
-            echo "GIT_COMMIT_ID: $GIT_COMMIT_ID"
-            make package
         - name: Upload Linux binary
           uses: actions/upload-artifact@v4
           with:
             name: fundslock-be-binary-linux
-            path: target/linux-amd64/fundslock-be
-        - name: Upload release artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: dist-packages
-            path: target/dist
+            path: backend/target/linux-amd64/fundslock-be
    # Docker image publishing
   publish-docker-image:
     needs: build

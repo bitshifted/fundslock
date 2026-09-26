@@ -50,5 +50,4 @@ Backend uses JWT tokens and wallet signing to authenticate users. Once user conn
 
 Automated build action creates Docker image for the backend. This can be deployed automatically in several ways:
 
-* AWS AppRunner
 
