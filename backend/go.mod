@@ -1,9 +1,11 @@
 module bitshifted/fundslock-be
 
-go 1.25.5
+go 1.26
 
 require (
 	github.com/alecthomas/kong v1.16.0
+	github.com/aws/aws-lambda-go v1.55.1
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/ethereum/go-ethereum v1.17.5
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-chi/cors v1.2.2

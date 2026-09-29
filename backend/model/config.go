@@ -52,7 +52,6 @@ func (e *EnvironmentVariableConfigurationLoader) Load() error {
 		return errors.New("failed to decode GRAPH_CONFIG_BASE64: " + err.Error())
 	}
 	AppConfig.GraphConfig = graphConfig
-	log.Logger.Debug().Msgf("Loaded graph configuration: %+v", graphConfig)
 	jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
 	if jwtSecretKey == "" {
 		return errors.New("configuration variable JWT_SECRET_KEY not set")
