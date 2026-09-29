@@ -5,10 +5,16 @@ package main
 
 import (
 	"bitshifted/fundslock-be/cli"
+	"bitshifted/fundslock-be/common"
 	"bitshifted/fundslock-be/log"
+	"os"
 
 	"github.com/alecthomas/kong"
 	"github.com/joho/godotenv"
+)
+
+const (
+	lambdaEnableDebugVar = "ENABLE_DEBUG_LOGGING"
 )
 
 var input cli.CLI
@@ -27,6 +33,9 @@ func main() {
 }
 
 func debugLoggingEnabled(args []string) bool {
+	if common.IsLambdaEnvironment() && os.Getenv(lambdaEnableDebugVar) == "true" {
+		return true
+	}
 	for _, s := range args {
 		if s == "--enable-debug" {
 			return true
