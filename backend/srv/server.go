@@ -4,11 +4,14 @@
 package srv
 
 import (
+	"bitshifted/fundslock-be/common"
 	"bitshifted/fundslock-be/log"
 	"bitshifted/fundslock-be/model"
 	"net/http"
 	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
+	chihandler "github.com/awslabs/aws-lambda-go-api-proxy/chi"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -16,7 +19,27 @@ import (
 	"github.com/go-chi/render"
 )
 
+// defaultStartFunc holds the function used to start the Lambda handler.
+// It defaults to lambda.Start but can be overridden in tests.
+var defaultStartFunc = lambda.Start
+
+type Server struct {
+	Router *chi.Mux
+	Server *http.Server
+}
+
+// DefaultServe is the default serve function used in production.
+// Tests can override this to intercept Lambda adapter creation.
+var DefaultServe = func(s *Server) error {
+	return s.Server.ListenAndServe()
+}
+
 func Start() error {
+	server := NewServer()
+	return server.Serve(DefaultServe)
+}
+
+func NewServer() *Server {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	// Sets 'Content-Type: application/json' on all responses
@@ -33,7 +56,7 @@ func Start() error {
 	err := configLoader.Load()
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("Failed to load configuration")
-		return err
+		panic(err)
 	}
 	initGraphqlClients()
 	// initialze JWT authentication middlwware
@@ -54,12 +77,27 @@ func Start() error {
 		r.Get("/api/v1/agreements", getAgreements)
 	})
 
-	server := http.Server{
+	httpServer := &http.Server{
 		Addr:         ":3000",
 		Handler:      router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
-	return server.ListenAndServe()
+
+	return &Server{
+		Router: router,
+		Server: httpServer,
+	}
+}
+
+func (s *Server) Serve(serveFn func(*Server) error) error {
+	if !common.IsLambdaEnvironment() {
+		return serveFn(s)
+	}
+
+	log.Logger.Info().Msg("Running in AWS Lambda environment")
+	adapter := chihandler.New(s.Router)
+	defaultStartFunc(adapter.ProxyWithContext)
+	return nil
 }
