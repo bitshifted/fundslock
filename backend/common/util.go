@@ -1,3 +1,6 @@
+// Copyright 2026 Bitshift ED
+// SPDX-License-Identifier: MPL-2.0
+
 package common
 
 import "os"
