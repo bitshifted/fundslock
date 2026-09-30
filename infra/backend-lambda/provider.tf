@@ -1,6 +1,6 @@
 
 provider "aws" {
-  region     = var.aws_region
+ region     = var.aws_region
 
   # Set the endpoint to the LocalStack API
 dynamic "endpoints" {
@@ -11,5 +11,4 @@ dynamic "endpoints" {
     lambda = var.local_endpoint
   }
 }
-
 }

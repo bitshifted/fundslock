@@ -19,10 +19,6 @@ variable "local_endpoint" {
   default = null
 }
 
-variable "dlq_name" {
-  type = string
-  default = "omni-stack-dlq"
-}
 
 # Lambda configuration variables
 variable "lambda_runtime" {
@@ -31,21 +27,12 @@ variable "lambda_runtime" {
   description = "Lambda runtime"
 }
 
-variable "micronaut_handler" {
-  type = string
-  default = "io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction"
-  description = "Lambda function handler"
+
+variable "fundslock_lambda_source_path" {
+  type        = string
+  description = "Path to fundslock binary to be deployed as Lambda function"
 }
 
-variable "omni_users_lambda_source_path" {
-  type = string
-  description = "Path to JAR file for omni-users lambda"
-}
-
-variable "omni_email_lambda_source_path" {
-  type = string
-  description = "Path to JAR file for omni-users lambda"
-}
 
 variable "lambda_env_vars" {
   type = map(map(string))
@@ -59,10 +46,6 @@ variable "lambda_encryption_key_alias" {
   description = "Alias KMS key for Lambda environment variable encryption"
 }
 
-variable "db_table_arn" {
-  type = string
-  description = "ARN of DynamoDB table"
-}
 
 # APi Gateway configuration variables
 variable "enable_api_gw" {
