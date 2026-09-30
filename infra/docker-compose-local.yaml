@@ -1,0 +1,36 @@
+
+services:
+  floci:
+    image: floci/floci:2.1.0
+    ports:
+      - "4566:4566"
+    environment:
+      - FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK=fundslock
+      - FLOCI_SERVICES_LAMBDA_EPHEMERAL=true
+      - FLOCI_DEFAULT_REGION=eu-central-1
+      - FLOCI_STORAGE_MODE=persistent
+    volumes:
+      # - "./scripts/init-s3-local.sh:/etc/floci/init/ready.d/init-s3-local.sh" # Mount startup script
+      - "floci-data:/persisted-data"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  floci-init:
+    image: amazon/aws-cli:latest
+    depends_on:
+      - floci
+    environment:
+      - AWS_ACCESS_KEY_ID=mock
+      - AWS_SECRET_ACCESS_KEY=mock
+      - AWS_DEFAULT_REGION=us-east-1
+    # Pomoćni kontejner sačeka 3 sekunde i kreira bucket preko mreže
+    entrypoint: /bin/sh -c "
+      sleep 3;
+      aws --endpoint-url=http://floci:4566 s3 mb s3://local-state-bucket;
+      echo 'S3 Bucket je uspesno kreiran!';"
+
+volumes:
+  floci-data:
+networks:
+  fundslock:
+    driver: bridge
+

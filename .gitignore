@@ -1,2 +1,5 @@
 .vscode/
 .docker/
+.terraform/
+.terraform.lock.hcl
+
