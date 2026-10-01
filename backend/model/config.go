@@ -10,6 +10,7 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type GraphConfig struct {
@@ -25,6 +26,7 @@ type ConfigurationVariables struct {
 	RefreshTokenDuration int64 // in seconds
 	SecureCookie         bool  // for local development, set to false to allow non-secure cookies
 	CookieDomain         string
+	CorsOrigins          []string
 }
 
 const (
@@ -73,6 +75,10 @@ func (e *EnvironmentVariableConfigurationLoader) Load() error {
 	if cookieDDomain == "" {
 		return errors.New("configuration variable COOKIE_DOMAIN not set." +
 			"Set it to the domain of your application (e.g., localhost for local development)")
+	}
+	corsOrigins := strings.Split(os.Getenv("CORS_ORIGINS"), ",")
+	if len(corsOrigins) == 0 || (len(corsOrigins) == 1 && corsOrigins[0] == "") {
+		return errors.New("configuration variable CORS_ORIGINS not set")
 	}
 	AppConfig.JwtSecretKey = []byte(jwtSecretKey)
 	AppConfig.AccessTokenDuration = accessTokenDuration

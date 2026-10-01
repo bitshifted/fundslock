@@ -44,20 +44,21 @@ func NewServer() *Server {
 	router.Use(middleware.Logger)
 	// Sets 'Content-Type: application/json' on all responses
 	router.Use(render.SetContentType(render.ContentTypeJSON))
-	// CORS config
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-	}))
+
 	configLoader := model.NewConfigurationLoader()
 	err := configLoader.Load()
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("Failed to load configuration")
 		panic(err)
 	}
+	// CORS config
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   model.AppConfig.CorsOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+	}))
 	initGraphqlClients()
 	// initialze JWT authentication middlwware
 	jwtInit()

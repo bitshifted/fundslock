@@ -34,6 +34,7 @@ func TestStartLambdaAdapterInvoked(t *testing.T) {
 	os.Setenv("GRAPH_CONFIG_BASE64", encoded)
 	os.Setenv("JWT_SECRET_KEY", "test-secret-key-for-testing-purposes-only")
 	os.Setenv("COOKIE_DOMAIN", "localhost")
+	os.Setenv("CORS_ORIGINS", "http://localhost")
 
 	var mu sync.Mutex
 	var capturedAdapter bool
