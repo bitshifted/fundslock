@@ -27,6 +27,7 @@ func TestLoad_MissingGraphConfigBase64(t *testing.T) {
 	os.Setenv("GRAPH_URL", "http://localhost:8000")
 	os.Setenv("GRAPH_API_KEY", "test-api-key")
 	os.Setenv("GRAPH_CONFIG_BASE64", "")
+	os.Setenv("CORS_ORIGINS", "http://localhost")
 	err := loader.Load()
 	if err == nil {
 		t.Fatal("Expected error for missing GRAPH_CONFIG_BASE64")
@@ -43,6 +44,7 @@ func TestLoad_MissingJwtSecretKey(t *testing.T) {
 	gc1 := `[{"chain":"mainnet","graphUrl":"http://subgraphs.api.url","apiKey":"graph-key"}]`
 	os.Setenv("GRAPH_CONFIG_BASE64", base64.StdEncoding.EncodeToString([]byte(gc1)))
 	os.Setenv("JWT_SECRET_KEY", "")
+	os.Setenv("CORS_ORIGINS", "http://localhost")
 	err := loader.Load()
 	if err == nil {
 		t.Fatal("Expected error for missing JWT_SECRET_KEY")
@@ -60,6 +62,7 @@ func TestLoad_MissingCookieDomain(t *testing.T) {
 	os.Setenv("GRAPH_CONFIG_BASE64", base64.StdEncoding.EncodeToString([]byte(gc1)))
 	os.Setenv("JWT_SECRET_KEY", "super-secret-jwt-key")
 	os.Setenv("COOKIE_DOMAIN", "")
+	os.Setenv("CORS_ORIGINS", "http://localhost")
 	err := loader.Load()
 	if err == nil {
 		t.Fatal("Expected error for missing COOKIE_DOMAIN")
@@ -84,6 +87,7 @@ func TestLoad_Success(t *testing.T) {
 	os.Setenv("REFRESH_TOKEN_DURATION", "604800")
 	os.Setenv("SECURE_COOKIE", "true")
 	os.Setenv("COOKIE_DOMAIN", "localhost")
+	os.Setenv("CORS_ORIGINS", "http://localhost")
 
 	err := loader.Load()
 	if err != nil {
@@ -123,6 +127,7 @@ func setupBasicEnv() {
 	os.Setenv("GRAPH_CONFIG_BASE64", base64.StdEncoding.EncodeToString([]byte(gc)))
 	os.Setenv("JWT_SECRET_KEY", "secret")
 	os.Setenv("COOKIE_DOMAIN", "localhost")
+	os.Setenv("CORS_ORIGINS", "http://localhost")
 }
 
 func TestLoad_DefaultAccessTokenDuration(t *testing.T) {
