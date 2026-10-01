@@ -28,6 +28,7 @@ Copy file `.env.example` as `.env`. The following environment variables can be s
 
 * `JWT_SECRET_KEY` (required) - secret key used for JWT token signing
 * `COOKIE_DOMAIN` (required) - sets domain for cookies
+* `CORS_ORIGINS` (required) - allowed CORS origins for clients accessing backend
 * `GRAPH_CONFIG_BASE64` (required) - access data for Graph protocol subgraphs. This is Base64 encoded JSON string. Example:
 
 ```shell
