@@ -77,9 +77,11 @@ func (e *EnvironmentVariableConfigurationLoader) Load() error {
 			"Set it to the domain of your application (e.g., localhost for local development)")
 	}
 	corsOrigins := strings.Split(os.Getenv("CORS_ORIGINS"), ",")
+	log.Logger.Info().Strs("corsOrigins", corsOrigins).Msg("CORS origins loaded from environment variable")
 	if len(corsOrigins) == 0 || (len(corsOrigins) == 1 && corsOrigins[0] == "") {
 		return errors.New("configuration variable CORS_ORIGINS not set")
 	}
+	AppConfig.CorsOrigins = corsOrigins
 	AppConfig.JwtSecretKey = []byte(jwtSecretKey)
 	AppConfig.AccessTokenDuration = accessTokenDuration
 	AppConfig.RefreshTokenDuration = refreshTokenDuration

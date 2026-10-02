@@ -1,4 +1,4 @@
-const BACKEND_URL = 'http://localhost:3000'
+const BACKEND_URL = 'http://localhost:3000/dev'
 const ACCESS_TOKEN_KEY = 'access_token'
 
 const SEPOLIA_RPC_URL = import.meta.env.VITE_SEPOLIA_RPC_URL

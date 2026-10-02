@@ -63,7 +63,7 @@ func verifySIWEMessage(w http.ResponseWriter, r *http.Request) {
 		Value:    tokens.RefreshToken,
 		HttpOnly: true,
 		Secure:   model.AppConfig.SecureCookie,
-		Path:     "/api/v1/auth/refresh",
+		Path:     "/dev/api/v1/auth/refresh",
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(time.Duration(model.AppConfig.RefreshTokenDuration) * time.Second),
 	})
@@ -118,7 +118,7 @@ func refreshAccessToken(w http.ResponseWriter, r *http.Request) {
 			Value:    tokens.RefreshToken,
 			HttpOnly: true,
 			Secure:   model.AppConfig.SecureCookie,
-			Path:     "/api/v1/auth/refresh",
+			Path:     "/dev/api/v1/auth/refresh",
 			SameSite: http.SameSiteLaxMode,
 			Expires:  time.Now().Add(time.Duration(model.AppConfig.RefreshTokenDuration) * time.Second),
 		})

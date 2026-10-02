@@ -57,3 +57,8 @@ variable "api_spec_file" {
   type = string
   description = "Path to OpenAPI spec file"
 }
+
+variable "api_cors_origins" {
+  type = list(string)
+  description = "List of allowed origins for CORS"
+}

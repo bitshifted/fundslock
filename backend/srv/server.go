@@ -8,6 +8,7 @@ import (
 	"bitshifted/fundslock-be/log"
 	"bitshifted/fundslock-be/model"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -44,6 +45,13 @@ func NewServer() *Server {
 	router.Use(middleware.Logger)
 	// Sets 'Content-Type: application/json' on all responses
 	router.Use(render.SetContentType(render.ContentTypeJSON))
+	// when running as Lambda behind API Gateway, strip the stage path prefix from the request URL path
+	if stage := os.Getenv("STAGE_PREFIX"); stage != "" {
+		router.Use(func(next http.Handler) http.Handler {
+			log.Logger.Info().Str("stage", stage).Msg("Using stage prefix for routing")
+			return http.StripPrefix("/"+stage, next)
+		})
+	}
 
 	configLoader := model.NewConfigurationLoader()
 	err := configLoader.Load()
@@ -52,13 +60,18 @@ func NewServer() *Server {
 		panic(err)
 	}
 	// CORS config
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   model.AppConfig.CorsOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-	}))
+	// Only set CORS configuration if not running in Lambda environment. For Lambda, it is set on the API Gateway level.
+	if !common.IsLambdaEnvironment() {
+		log.Logger.Info().Msg("No Lambda environment detected, setting CORS configuration")
+		router.Use(cors.Handler(cors.Options{
+			AllowedOrigins:   model.AppConfig.CorsOrigins,
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+			ExposedHeaders:   []string{"Link"},
+			AllowCredentials: true,
+		}))
+	}
+
 	initGraphqlClients()
 	// initialze JWT authentication middlwware
 	jwtInit()
