@@ -20,15 +20,24 @@ const (
 var input cli.CLI
 
 func main() {
-	// Only load .env if running locally; will not crash if missing in production
-	_ = godotenv.Load()
-	ctx := kong.Parse(&input)
-	log.Init(debugLoggingEnabled(ctx.Args))
-	log.Logger.Info().Msg("Starting server...")
-	log.Logger.Debug().Msg("Debug logging enabled")
-	err := ctx.Run()
-	if err != nil {
-		log.Logger.Fatal().Err(err).Msg("Failed to run command")
+	if common.IsLambdaEnvironment() {
+		log.Init(debugLoggingEnabled([]string{}))
+		startCmd := cli.StartCmd{}
+		err := startCmd.Run(nil)
+		if err != nil {
+			log.Logger.Fatal().Err(err).Msg("Failed to start Lambda function")
+		}
+	} else {
+		// Only load .env if running locally; will not crash if missing in production
+		_ = godotenv.Load()
+		ctx := kong.Parse(&input)
+		log.Init(debugLoggingEnabled(ctx.Args))
+		log.Logger.Info().Msg("Starting server...")
+		log.Logger.Debug().Msg("Debug logging enabled")
+		err := ctx.Run()
+		if err != nil {
+			log.Logger.Fatal().Err(err).Msg("Failed to run command")
+		}
 	}
 }
 

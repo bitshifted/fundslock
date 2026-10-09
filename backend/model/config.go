@@ -4,6 +4,7 @@
 package model
 
 import (
+	"bitshifted/fundslock-be/common"
 	"bitshifted/fundslock-be/log"
 	"encoding/base64"
 	"encoding/json"
@@ -25,7 +26,6 @@ type ConfigurationVariables struct {
 	AccessTokenDuration  int64 // in seconds
 	RefreshTokenDuration int64 // in seconds
 	SecureCookie         bool  // for local development, set to false to allow non-secure cookies
-	CookieDomain         string
 	CorsOrigins          []string
 }
 
@@ -71,14 +71,9 @@ func (e *EnvironmentVariableConfigurationLoader) Load() error {
 		log.Logger.Warn().Msg("SECURE_COOKIE is not set or can't be read. Using default value: true")
 		secureCookie = true
 	}
-	cookieDDomain := os.Getenv("COOKIE_DOMAIN")
-	if cookieDDomain == "" {
-		return errors.New("configuration variable COOKIE_DOMAIN not set." +
-			"Set it to the domain of your application (e.g., localhost for local development)")
-	}
 	corsOrigins := strings.Split(os.Getenv("CORS_ORIGINS"), ",")
 	log.Logger.Info().Strs("corsOrigins", corsOrigins).Msg("CORS origins loaded from environment variable")
-	if len(corsOrigins) == 0 || (len(corsOrigins) == 1 && corsOrigins[0] == "") {
+	if len(corsOrigins) == 0 || (len(corsOrigins) == 1 && corsOrigins[0] == "" && !common.IsLambdaEnvironment()) {
 		return errors.New("configuration variable CORS_ORIGINS not set")
 	}
 	AppConfig.CorsOrigins = corsOrigins
@@ -86,7 +81,6 @@ func (e *EnvironmentVariableConfigurationLoader) Load() error {
 	AppConfig.AccessTokenDuration = accessTokenDuration
 	AppConfig.RefreshTokenDuration = refreshTokenDuration
 	AppConfig.SecureCookie = secureCookie
-	AppConfig.CookieDomain = cookieDDomain
 	return nil
 }
 

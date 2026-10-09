@@ -54,26 +54,6 @@ func TestLoad_MissingJwtSecretKey(t *testing.T) {
 	}
 }
 
-func TestLoad_MissingCookieDomain(t *testing.T) {
-	loader := NewConfigurationLoader()
-	os.Clearenv()
-	setupBasicEnv()
-	gc1 := `[{"chain":"mainnet","graphUrl":"http://subgraphs.api.url","apiKey":"graph-key"}]`
-	os.Setenv("GRAPH_CONFIG_BASE64", base64.StdEncoding.EncodeToString([]byte(gc1)))
-	os.Setenv("JWT_SECRET_KEY", "super-secret-jwt-key")
-	os.Setenv("COOKIE_DOMAIN", "")
-	os.Setenv("CORS_ORIGINS", "http://localhost")
-	err := loader.Load()
-	if err == nil {
-		t.Fatal("Expected error for missing COOKIE_DOMAIN")
-	}
-	expectedMsg := "configuration variable COOKIE_DOMAIN not set." +
-		"Set it to the domain of your application (e.g., localhost for local development)"
-	if err.Error() != expectedMsg {
-		t.Errorf("Expected error %q, got %q", expectedMsg, err.Error())
-	}
-}
-
 func TestLoad_Success(t *testing.T) {
 	loader := NewConfigurationLoader()
 	os.Clearenv()
@@ -114,9 +94,6 @@ func TestLoad_Success(t *testing.T) {
 	}
 	if AppConfig.SecureCookie != true {
 		t.Errorf("Expected SecureCookie true, got %t", AppConfig.SecureCookie)
-	}
-	if AppConfig.CookieDomain != "localhost" {
-		t.Errorf("Expected CookieDomain %q, got %q", "localhost", AppConfig.CookieDomain)
 	}
 }
 

@@ -1,25 +1,31 @@
 
+data "aws_caller_identity" "current" {}
+
 module "nosrv" {
   source = "git@github.com:bitshifted/cloud-tools.git//nosrv?ref=nosrv-1.1.0"
 
   # Lambda function definitions
   lambda_defs = {
     "fundslock" = {
-      function_name = "omni-users-${var.environment}"
-      handler = "fundslock-be"
+      function_name = "fundslock"
+      handler = "bootstrap"
       runtime = "provided.al2023"
       zip_archive_config = {
         source_file = "${var.fundslock_lambda_source_path}"
         output_dir = "/tmp/fundslock-lambda"
       }
+      environment_variables = var.lambda_env_vars["fundslock"]
 
       execution_role_policy = jsonencode({
         Version = "2012-10-17"
         Statement = [
           {
-            Sid = "Allow All"
+            Sid = "AllowSSMParameterAccess"
             Effect = "Allow"
-            Action = []
+            Action = ["ssm:GetParameter"]
+            Resource = [
+              "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/fundslock/*"
+            ]
           }
         ]
       })
