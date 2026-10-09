@@ -46,6 +46,7 @@ func NewServer() *Server {
 	// Sets 'Content-Type: application/json' on all responses
 	router.Use(render.SetContentType(render.ContentTypeJSON))
 	// when running as Lambda behind API Gateway, strip the stage path prefix from the request URL path
+	log.Logger.Info().Msgf("STAGE_PREFIX: %s", os.Getenv("STAGE_PREFIX"))
 	if stage := os.Getenv("STAGE_PREFIX"); stage != "" {
 		router.Use(func(next http.Handler) http.Handler {
 			log.Logger.Info().Str("stage", stage).Msg("Using stage prefix for routing")

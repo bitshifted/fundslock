@@ -11,8 +11,6 @@ paths:
     get:
       summary: Create SIWE nonce
       description: Generates a cryptographic nonce for Sign-In with Ethereum (SIWE) authentication flow
-      tags:
-        - Authentication
       x-amazon-apigateway-integration:
         httpMethod: "GET"
         type: "aws_proxy"
@@ -36,8 +34,6 @@ paths:
     post:
       summary: Verify SIWE message
       description: Verifies an Ethereum signed message and returns access token along with setting refresh token cookie
-      tags:
-        - Authentication
       requestBody:
         required: true
         content:
@@ -79,8 +75,6 @@ paths:
     post:
       summary: Refresh access token
       description: Uses the refresh token cookie to generate a new access token. May also set a new refresh token cookie if expiration is within 6 hours
-      tags:
-        - Authentication
       security:
         - cookieAuth: []
       x-amazon-apigateway-integration:
