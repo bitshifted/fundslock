@@ -8,6 +8,7 @@ module "nosrv" {
   lambda_defs = {
     "fundslock" = {
       function_name = "fundslock"
+      # for Go lambdas, the handler is always "bootstrap" and the runtime is "provided.al2"
       handler = "bootstrap"
       runtime = "provided.al2023"
       zip_archive_config = {
